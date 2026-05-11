@@ -35,7 +35,7 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
         content: [
           {
             type: "image",
-            source: { type: "base64", media_type: mediaType, data: base64Data }
+            source: { type: "base64", media_type: mediaType?.startsWith("image/") ? mediaType : "image/jpeg", data: base64Data }
           },
           {
             type: "text",
