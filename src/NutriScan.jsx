@@ -13,7 +13,7 @@ async function analisarComIA(base64Data, mediaType) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-5",
       max_tokens: 1000,
       system: `Você é um especialista em nutrição brasileiro. Analise a foto do prato e identifique todos os alimentos visíveis.
 Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
