@@ -76,7 +76,7 @@ export default function NutriScan() {
       const dataUrl = e.target.result;
       setImagem(dataUrl);
       setBase64(dataUrl.split(",")[1]);
-      setMediaType(file.type);
+      setMediaType(file.type || "image/jpeg");
       setStatus("idle");
       setResultado(null);
       setEnviado(false);
