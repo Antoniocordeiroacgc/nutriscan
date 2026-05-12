@@ -55,13 +55,13 @@ export default function Cadastro({ onCadastrado }) {
     if (!email || !senha) { setErro("Preencha e-mail e senha."); return; }
     setLoading(true); setErro("");
     try {
-      const { data, error } = await supabase
-        .from("pacientes")
-        .select("*")
-        .eq("email", email)
-        .eq("senha", senha)
-        .single();
-      if (error || !data) throw new Error("E-mail ou senha incorretos.");
+     const { data, error } = await supabase
+      .from("pacientes")
+      .select("*")
+      .eq("email", email)
+      .eq("senha", senha)
+      .maybeSingle();
+    if (!data) throw new Error("E-mail ou senha incorretos.");
       onCadastrado(data);
     } catch (e) {
       setErro(e.message);
