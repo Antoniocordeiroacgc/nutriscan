@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { salvarRefeicao } from "./lib/supabase";
 
-const PACIENTE_ID = "00000000-0000-0000-0000-000000000001";
+const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
 
 async function analisarComIA(base64Data, mediaType) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -57,7 +57,7 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
   return JSON.parse(clean);
 }
 
-export default function NutriScan() {
+export default function NutriScan({ paciente }) {
   const [imagem, setImagem] = useState(null);
   const [base64, setBase64] = useState(null);
   const [mediaType, setMediaType] = useState(null);
