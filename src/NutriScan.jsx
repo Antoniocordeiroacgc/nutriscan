@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { salvarRefeicao } from "./lib/supabase";
 
-const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
 
 async function analisarComIA(base64Data, mediaType) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -13,7 +12,7 @@ async function analisarComIA(base64Data, mediaType) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-20250514",
       max_tokens: 1000,
       system: `Você é um especialista em nutrição brasileiro. Analise a foto do prato e identifique todos os alimentos visíveis.
 Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
@@ -35,7 +34,7 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
         content: [
           {
             type: "image",
-            source: { type: "base64", media_type: mediaType?.startsWith("image/") ? mediaType : "image/jpeg", data: base64Data }
+            source: { type: "base64", media_type: mediaType, data: base64Data }
           },
           {
             type: "text",
@@ -58,6 +57,7 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
 }
 
 export default function NutriScan({ paciente }) {
+  const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
   const [imagem, setImagem] = useState(null);
   const [base64, setBase64] = useState(null);
   const [mediaType, setMediaType] = useState(null);
@@ -76,7 +76,7 @@ export default function NutriScan({ paciente }) {
       const dataUrl = e.target.result;
       setImagem(dataUrl);
       setBase64(dataUrl.split(",")[1]);
-      setMediaType("image/jpeg");
+      setMediaType(file.type);
       setStatus("idle");
       setResultado(null);
       setEnviado(false);
