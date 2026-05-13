@@ -116,7 +116,7 @@ export default function NutriDashboard() {
   );
 
   const DetalhePaciente = () => (
-      <div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", padding: "12px 16px", position: "relative" }}>
+      <style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 16px", minHeight: 0 }}
       {/* Header paciente */}
       <div style={{ background: "white", borderBottom: "1px solid #F0EFE8", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {isMobile && (
@@ -137,7 +137,7 @@ export default function NutriDashboard() {
       </div>
 
       {/* Scroll container principal */}
-      <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 16px" }}>
+      style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "12px 16px", minHeight: 0 }}
 
         {/* Métricas */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 12 }}>
@@ -282,7 +282,7 @@ export default function NutriDashboard() {
       )}
 
       {/* DESKTOP — sidebar + main */}
-      <div className="dash-desktop" style={{ display: "flex", height: "calc(100vh - 52px)" }}>
+      <div className="dash-desktop" style={{ display: "flex", height: "calc(100vh - 52px)", overflow: "hidden" }}>
         <div style={{ width: 280, flexShrink: 0, borderRight: "1px solid #F0EFE8" }}>
           <ListaPacientes />
         </div>
