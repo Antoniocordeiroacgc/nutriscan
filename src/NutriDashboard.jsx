@@ -40,13 +40,14 @@ export default function NutriDashboard() {
   }
 
   async function carregarRefeicoes(pacienteId) {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = new Date().toISOString().split("T")[0];const seteDias = new Date();
+    seteDias.setDate(seteDias.getDate() - 7);
     const { data } = await supabase
-      .from("refeicoes")
-      .select(`*, alimentos(*)`)
-      .eq("paciente_id", pacienteId)
-      .gte("registrado_em", `${hoje}T00:00:00`)
-      .order("registrado_em");
+       .from("refeicoes")
+       .select(`*, alimentos(*)`)
+       .eq("paciente_id", pacienteId)
+       .gte("registrado_em", seteDias.toISOString())
+       .order("registrado_em", { ascending: false });
     setRefeicoes(prev => ({ ...prev, [pacienteId]: data || [] }));
   }
 
