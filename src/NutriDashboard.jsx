@@ -116,8 +116,7 @@ export default function NutriDashboard() {
   );
 
   const DetalhePaciente = () => (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-
+<div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", padding: "12px 16px", position: "relative" }}>
       {/* Header paciente */}
       <div style={{ background: "white", borderBottom: "1px solid #F0EFE8", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {isMobile && (
@@ -272,17 +271,15 @@ export default function NutriDashboard() {
       )}
 
       {/* MOBILE — tela única com navegação */}
-      <div className="dash-mobile" style={{ minHeight: "calc(100vh - 52px)", display: "flex", flexDirection: "column" }}>
-        {mostrarLista ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)" }}>
-            <ListaPacientes />
-          </div>
-        ) : (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)" }}>
-            <DetalhePaciente />
-          </div>
-        )}
-      </div>
+      {mostrarLista ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)", overflow: "hidden" }}>
+          <ListaPacientes />
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)", overflow: "hidden" }}>
+          <DetalhePaciente />
+        </div>
+      )}
 
       {/* DESKTOP — sidebar + main */}
       <div className="dash-desktop" style={{ display: "flex", height: "calc(100vh - 52px)" }}>
