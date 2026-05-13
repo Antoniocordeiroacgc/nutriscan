@@ -75,7 +75,7 @@ export default function NutriDashboard() {
   const bgs   = ["#EEF7F2","#E6F1FB","#FBEAF0","#FAEEDA","#EEEDFE","#FCEBEB"];
 
   return (
-    <div style={{ fontFamily: "system-ui,sans-serif", height: "calc(100vh - 52px)", display: "flex", background: "#F7F5F0", overflow: "hidden" }}>
+    <div style={{ fontFamily: "system-ui,sans-serif", minHeight: "calc(100vh - 52px)", display: "flex", flexDirection: "column", background: "#F7F5F0" }}>
 
       {/* Modal de foto ampliada */}
       {fotoModal && (
@@ -127,7 +127,7 @@ export default function NutriDashboard() {
 
       {/* Main */}
       {selecionado ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
 
           {/* Header paciente */}
           <div style={{ background: "white", borderBottom: "1px solid #F0EFE8", padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
