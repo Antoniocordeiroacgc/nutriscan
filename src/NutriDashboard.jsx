@@ -116,7 +116,7 @@ export default function NutriDashboard() {
   );
 
   const DetalhePaciente = () => (
-<div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", padding: "12px 16px", position: "relative" }}>
+      <div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", padding: "12px 16px", position: "relative" }}>
       {/* Header paciente */}
       <div style={{ background: "white", borderBottom: "1px solid #F0EFE8", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {isMobile && (
