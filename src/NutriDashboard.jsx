@@ -55,7 +55,7 @@ export default function NutriDashboard() {
 
   async function selecionarPaciente(p) {
     setSelecionado(p);
-    if (!refeicoes[p.id]) await carregarRefeicoes(p.id);
+    await carregarRefeicoes(p.id);
     if (isMobile) setMostrarLista(false);
   }
 
