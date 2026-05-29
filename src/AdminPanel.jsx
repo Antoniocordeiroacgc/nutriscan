@@ -39,6 +39,17 @@ export default function AdminPanel({ onSair }) {
     setContatos(prev => prev.map(c => c.id === id ? { ...c, respondido: true } : c));
   };
 
+  const excluirPaciente = async (id, nome) => {
+  if (!window.confirm(`Excluir o paciente "${nome}"?\n\nIsso vai apagar todas as refeições e fotos. Esta ação não pode ser desfeita.`)) return;
+  const { data: refs } = await supabase.from("refeicoes").select("id").eq("paciente_id", id);
+  if (refs?.length > 0) {
+    await supabase.from("alimentos").delete().in("refeicao_id", refs.map(r => r.id));
+  }
+  await supabase.from("refeicoes").delete().eq("paciente_id", id);
+  await supabase.from("pacientes").delete().eq("id", id);
+  setPacientes(prev => prev.filter(p => p.id !== id));
+  };
+
   const diasRestantes = (trialFim) => {
     if (!trialFim) return 30;
     const diff = new Date(trialFim) - new Date();
@@ -162,10 +173,16 @@ export default function AdminPanel({ onSair }) {
                   <div style={{ fontSize: 12, color: "#555" }}>{p.objetivo || "Saúde geral"}</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: refs > 0 ? "#1E5C3A" : "#ccc" }}>{refs}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: dias <= 5 ? "#E24B4A" : dias <= 10 ? "#EF9F27" : "#1E5C3A" }}>{dias}d</div>
-                  <div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <span style={{ background: ativo ? "#EEF7F2" : "#F0EFE8", color: ativo ? "#0F6E56" : "#888", borderRadius: 99, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>
                       {ativo ? "✓ Ativo" : "Expirado"}
                     </span>
+                    <button
+                      onClick={() => excluirPaciente(p.id, p.nome)}
+                      style={{ background: "#FCEBEB", color: "#E24B4A", border: "none", borderRadius: 6, padding: "3px 8px", fontSize: 11, cursor: "pointer", fontWeight: 700 }}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               );
