@@ -13,7 +13,7 @@ function statusPaciente(total, meta) {
 
 function hora(iso) {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 const CORES = ["#4CAF82","#378ADD","#D4537E","#EF9F27","#7F77DD","#E24B4A"];
@@ -29,16 +29,16 @@ function Avatar({ nome, size = 40, idx = 0 }) {
 }
 
 export default function NutriDashboard() {
-  const [pacientes, setPacientes]       = useState([]);
-  const [refeicoes, setRefeicoes]       = useState({});
-  const [selecionado, setSelecionado]   = useState(null);
-  const [selecionadoIdx, setSelecionadoIdx] = useState(0);
-  const [busca, setBusca]               = useState("");
-  const [carregando, setCarregando]     = useState(true);
-  const [nota, setNota]                 = useState({});
-  const [notaEnviada, setNotaEnviada]   = useState({});
-  const [fotoModal, setFotoModal]       = useState(null);
-  const [view, setView]                 = useState("lista"); // "lista" | "detalhe"
+  const [pacientes, setPacientes]     = useState([]);
+  const [refeicoes, setRefeicoes]     = useState({});
+  const [selecionado, setSelecionado] = useState(null);
+  const [selIdx, setSelIdx]           = useState(0);
+  const [busca, setBusca]             = useState("");
+  const [carregando, setCarregando]   = useState(true);
+  const [nota, setNota]               = useState({});
+  const [notaEnviada, setNotaEnviada] = useState({});
+  const [fotoModal, setFotoModal]     = useState(null);
+  const [view, setView]               = useState("lista");
 
   useEffect(() => { carregar(); }, []);
 
@@ -47,7 +47,7 @@ export default function NutriDashboard() {
     const { data } = await supabase.from("pacientes").select("*").order("nome");
     if (data?.length > 0) {
       setPacientes(data);
-      await selecionarPaciente(data[0], 0, data);
+      await selecionarPaciente(data[0], 0);
     }
     setCarregando(false);
   }
@@ -64,40 +64,58 @@ export default function NutriDashboard() {
     return data || [];
   }
 
-  async function selecionarPaciente(p, idx, lista) {
+  async function selecionarPaciente(p, idx) {
     setSelecionado(p);
-    setSelecionadoIdx(idx);
+    setSelIdx(idx || 0);
     setView("detalhe");
     const refs = await buscarRefeicoes(p.id);
     setRefeicoes(prev => ({ ...prev, [p.id]: refs }));
   }
 
-  const filtrados = (pacientes || []).filter(p =>
+  const filtrados = pacientes.filter(p =>
     p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
     p.email?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const refs     = selecionado ? (refeicoes[selecionado.id] || []) : [];
-  const total    = totalKcal(refs);
-  const meta     = selecionado?.meta_kcal || 1800;
-  const pct      = Math.min(100, Math.round((total / meta) * 100));
-  const st       = selecionado ? statusPaciente(total, meta) : null;
+  const refs      = selecionado ? (refeicoes[selecionado.id] || []) : [];
+  const total     = totalKcal(refs);
+  const meta      = selecionado?.meta_kcal || 1800;
+  const pct       = Math.min(100, Math.round((total / meta) * 100));
+  const st        = selecionado ? statusPaciente(total, meta) : null;
   const progColor = pct > 110 ? "#E24B4A" : pct < 50 ? "#EF9F27" : "#1E5C3A";
+  const isMobile  = window.innerWidth < 768;
 
-  // ── Sidebar ────────────────────────────────────────────
   const Sidebar = () => (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "white", borderRight: "1px solid #F0EFE8" }}>
       <div style={{ padding: "14px 12px", borderBottom: "1px solid #F0EFE8", flexShrink: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 13, color: "#1E5C3A", marginBottom: 8 }}>👩‍⚕️ Dra. Ana Oliveira</div>
+        <div style={{ fontWeight: 800, fontSize: 14, color: "#1E5C3A", marginBottom: 10 }}>
+          👩‍⚕️ Dra. Ana Oliveira
+        </div>
         <input
           value={busca} onChange={e => setBusca(e.target.value)}
           placeholder="🔍 Buscar paciente..."
           style={{ width: "100%", border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 13, outline: "none", background: "#F7F5F0", boxSizing: "border-box" }}
         />
       </div>
+
+      {/* Resumo rápido */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "10px 12px", borderBottom: "1px solid #F0EFE8", flexShrink: 0 }}>
+        <div style={{ background: "#EEF7F2", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#1E5C3A" }}>{pacientes.length}</div>
+          <div style={{ fontSize: 10, color: "#888" }}>Pacientes</div>
+        </div>
+        <div style={{ background: "#E6F1FB", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#378ADD" }}>
+            {pacientes.filter(p => totalKcal(refeicoes[p.id] || []) > 0).length}
+          </div>
+          <div style={{ fontSize: 10, color: "#888" }}>Com registro</div>
+        </div>
+      </div>
+
       <div style={{ fontSize: 10, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.8, padding: "8px 12px 4px", flexShrink: 0 }}>
         Pacientes ({filtrados.length})
       </div>
+
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {carregando ? (
           <div style={{ textAlign: "center", padding: 24, color: "#aaa", fontSize: 13 }}>Carregando...</div>
@@ -107,7 +125,7 @@ export default function NutriDashboard() {
           const s   = statusPaciente(tot, p.meta_kcal || 1800);
           const ativo = selecionado?.id === p.id;
           return (
-            <div key={p.id} onClick={() => selecionarPaciente(p, i, pacientes)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", cursor: "pointer", borderBottom: "1px solid #F7F5F0", background: ativo ? "#EEF7F2" : "white", borderLeft: `3px solid ${ativo ? "#1E5C3A" : "transparent"}` }}>
+            <div key={p.id} onClick={() => selecionarPaciente(p, i)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", cursor: "pointer", borderBottom: "1px solid #F7F5F0", background: ativo ? "#EEF7F2" : "white", borderLeft: `3px solid ${ativo ? "#1E5C3A" : "transparent"}` }}>
               <Avatar nome={p.nome} size={38} idx={i} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: ativo ? 700 : 500, color: ativo ? "#1E5C3A" : "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nome}</div>
@@ -121,43 +139,49 @@ export default function NutriDashboard() {
     </div>
   );
 
-  // ── Detalhe ────────────────────────────────────────────
   const Detalhe = () => (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, minWidth: 0 }}>
 
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #F0EFE8", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-        <button onClick={() => setView("lista")} style={{ background: "#EEF7F2", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, color: "#1E5C3A", cursor: "pointer", fontWeight: 700, flexShrink: 0, display: window.innerWidth < 768 ? "block" : "none" }}>
-          ← Lista
-        </button>
-        <Avatar nome={selecionado?.nome} size={42} idx={selecionadoIdx} />
+        {isMobile && (
+          <button onClick={() => setView("lista")} style={{ background: "#EEF7F2", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, color: "#1E5C3A", cursor: "pointer", fontWeight: 700, flexShrink: 0 }}>
+            ← Lista
+          </button>
+        )}
+        <Avatar nome={selecionado?.nome} size={42} idx={selIdx} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selecionado?.nome}</div>
           <div style={{ fontSize: 11, color: "#aaa" }}>{selecionado?.email} · {selecionado?.objetivo || "Saúde geral"} · Meta: {meta} kcal</div>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: st?.bg, color: st?.color, flexShrink: 0 }}>{st?.label}</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: st?.bg, color: st?.color }}>{st?.label}</span>
+          <button onClick={() => selecionarPaciente(selecionado, selIdx)} style={{ background: "transparent", border: "none", fontSize: 11, color: "#1E5C3A", cursor: "pointer", fontWeight: 600 }}>
+            🔄 Atualizar
+          </button>
+        </div>
       </div>
 
-      {/* Conteúdo com scroll */}
+      {/* Scroll */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "14px 16px" }}>
 
         {/* Métricas */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
           {[
-            { label: "Consumido", val: total + " kcal" },
-            { label: "Meta",      val: meta + " kcal" },
-            { label: "Saldo",     val: Math.abs(meta - total) + (total > meta ? " acima" : " rest.") },
-            { label: "Adesão",    val: pct + "%" },
+            { label: "Consumido", val: total + " kcal", color: "#1E5C3A" },
+            { label: "Meta",      val: meta + " kcal",  color: "#378ADD" },
+            { label: "Saldo",     val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
+            { label: "Adesão",    val: pct + "%", color: progColor },
           ].map((m, i) => (
             <div key={i} style={{ background: "white", borderRadius: 12, padding: "10px 12px", border: "1px solid #F0EFE8" }}>
               <div style={{ fontSize: 11, color: "#aaa", marginBottom: 3 }}>{m.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#1E5C3A" }}>{m.val}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: m.color }}>{m.val}</div>
             </div>
           ))}
         </div>
 
         {/* Progresso */}
-        <div style={{ background: "white", borderRadius: 12, padding: "10px 14px", border: "1px solid #F0EFE8", marginBottom: 16 }}>
+        <div style={{ background: "white", borderRadius: 12, padding: "10px 14px", border: "1px solid #F0EFE8", marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#aaa", marginBottom: 6 }}>
             <span>Progresso do dia</span><span>{pct}%</span>
           </div>
@@ -166,11 +190,11 @@ export default function NutriDashboard() {
           </div>
         </div>
 
-        {/* Aviso precisão IA */}
+        {/* Aviso IA */}
         <div style={{ background: "#FAEEDA", border: "1px solid #F0D9A0", borderRadius: 10, padding: "8px 12px", marginBottom: 14, display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontSize: 14 }}>🤖</span>
+          <span style={{ fontSize: 16 }}>🤖</span>
           <div style={{ fontSize: 11, color: "#633806", lineHeight: 1.4 }}>
-            <strong>Análise por IA:</strong> identificação visual pode ter imprecisões. O paciente confirma os alimentos antes de enviar.
+            <strong>Análise por visão computacional:</strong> identificação pode ter imprecisões. O paciente confirma os alimentos antes de enviar. Verifique as fotos para validar.
           </div>
         </div>
 
@@ -236,7 +260,7 @@ export default function NutriDashboard() {
             <div style={{ padding: "8px 14px 12px", borderTop: "1px solid #F7F5F0" }}>
               {notaEnviada[r.id] ? (
                 <div style={{ background: "#EEF7F2", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#1E5C3A", fontWeight: 500 }}>
-                  ✅ Observação enviada!
+                  ✅ Observação enviada ao paciente!
                 </div>
               ) : (
                 <div style={{ display: "flex", gap: 8 }}>
@@ -254,22 +278,19 @@ export default function NutriDashboard() {
             </div>
           </div>
         ))}
-
         <div style={{ height: 20 }} />
       </div>
     </div>
   );
-
-  const isMobile = window.innerWidth < 768;
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", height: "calc(100vh - 52px)", display: "flex", overflow: "hidden", background: "#F7F5F0" }}>
 
       {/* Modal foto */}
       {fotoModal && (
-        <div onClick={() => setFotoModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, cursor: "pointer" }}>
+        <div onClick={() => setFotoModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, cursor: "pointer" }}>
           <img src={fotoModal} alt="prato" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
-          <div style={{ position: "absolute", top: 16, right: 20, color: "white", fontSize: 28 }}>✕</div>
+          <div style={{ position: "absolute", top: 16, right: 20, color: "white", fontSize: 28, fontWeight: 700 }}>✕</div>
         </div>
       )}
 
@@ -286,9 +307,7 @@ export default function NutriDashboard() {
           <div style={{ width: 280, flexShrink: 0, height: "100%", overflow: "hidden" }}>
             <Sidebar />
           </div>
-          {selecionado ? (
-            <Detalhe />
-          ) : (
+          {selecionado ? <Detalhe /> : (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", flexDirection: "column", gap: 8 }}>
               <div style={{ fontSize: 32, opacity: 0.3 }}>👈</div>
               <div>Selecione um paciente</div>
