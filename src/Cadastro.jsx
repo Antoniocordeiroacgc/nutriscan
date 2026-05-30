@@ -23,6 +23,7 @@ export default function Cadastro({ onCadastrado }) {
   const [cMensagem, setCMensagem] = useState("");
   const [cLoading, setCLoading]   = useState(false);
   const [cErro, setCErro]         = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false); 
 
   const cadastrar = async () => {
     if (!nome || !email || !senha || !objetivo) { setErro("Preencha todos os campos."); return; }
@@ -126,8 +127,8 @@ export default function Cadastro({ onCadastrado }) {
             <div style={{ fontSize: 12, color: "#aaa", marginBottom: 20 }}>Etapa 1 de 2</div>
             {input(nome, setNome, "Nome completo")}
             {input(email, setEmail, "Seu melhor e-mail", "email")}
-            {input(senha, setSenha, "Crie uma senha", "password")}
-            {erro && <div style={{ color: "#C00", fontSize: 12, marginBottom: 10 }}>{erro}</div>}
+            <div style={{ position: "relative", marginBottom: 10 }}>
+                {erro && <div style={{ color: "#C00", fontSize: 12, marginBottom: 10 }}>{erro}</div>}
             <button onClick={() => { if (!nome || !email || !senha) { setErro("Preencha todos os campos."); return; } setErro(""); setEtapa("objetivo"); }} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Continuar →</button>
             <button onClick={() => { setEtapa("inicio"); setErro(""); }} style={{ width: "100%", background: "transparent", color: "#666", border: "none", fontSize: 13, cursor: "pointer", padding: 8, marginTop: 4 }}>← Voltar</button>
           </div>
