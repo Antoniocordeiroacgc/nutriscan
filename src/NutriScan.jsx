@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "./lib/supabase";
+import Rodape from "./Rodape";
 
-// ── Tabela TACO simplificada (kcal/100g) ─────────────────
+// ── Tabela TACO (kcal/100g) ───────────────────────────────
 const TACO = {
   "abacate": 96, "abacaxi": 48, "açaí": 58, "acerola": 33,
   "banana": 92, "caju": 43, "caqui": 71, "carambola": 35,
@@ -28,17 +29,17 @@ const TACO = {
   "queijo minas": 264, "queijo prato": 358, "requeijão": 235,
   "manteiga": 726, "margarina": 533, "azeite": 884, "óleo": 884,
   "açúcar": 387, "mel": 309, "chocolate": 546, "sorvete": 207,
-  "bolo": 344, "biscoito": 458,
+  "bolo de queijo": 320, "bolo de trigo": 344, "biscoito": 458,
 };
 
 function calcularCalorias(nome, pesoG) {
-  const nomeLower = nome.toLowerCase().trim();
+  const n = nome.toLowerCase().trim();
   for (const [alimento, cal100g] of Object.entries(TACO)) {
-    if (nomeLower.includes(alimento) || alimento.includes(nomeLower)) {
+    if (n.includes(alimento) || alimento.includes(n)) {
       return Math.round((cal100g * pesoG) / 100);
     }
   }
-  return null; // não encontrado na TACO
+  return null;
 }
 
 // ── API Claude ────────────────────────────────────────────
@@ -55,34 +56,37 @@ async function analisarComIA(base64Data) {
       model: "claude-sonnet-4-5",
       max_tokens: 1500,
       system: `Você é nutricionista brasileiro especialista na Tabela TACO.
+
 Analise a foto com MÁXIMA ATENÇÃO visual. Diferencie:
-- ABACATE: verde/escuro, formato de pera, polpa verde/amarela cremosa
-- PERA: amarela/verde clara, casca lisa brilhante, muito diferente do abacate
-- CENOURA: laranja, cilíndrica e comprida
-- ABÓBORA: laranja, pedaços irregulares/cubos
-- QUIABO: verde, octogonal, pontiagudo
-- PIMENTÃO: verde/vermelho, oco, brilhante e largo
-- BOLO DE QUEIJO: amarelado, textura densa, formato arredondado pequeno
-- BOLO DE TRIGO: mais claro, textura esponjosa
+- ABACATE: casca verde/escura rugosa, formato oval/periforme, polpa verde/amarela cremosa — NÃO confunda com pera
+- PERA: casca lisa amarela/verde clara brilhante, formato de sino, polpa branca crocante
+- CENOURA: laranja, cilíndrica e comprida, geralmente em rodelas ou palitos
+- ABÓBORA: laranja, pedaços irregulares/cubos com casca grossa
+- QUIABO: verde escuro, formato octogonal pontiagudo, textura aveludada
+- PIMENTÃO: verde/vermelho/amarelo brilhante, largo, oco, paredes grossas
+- BOLO DE QUEIJO: amarelado, textura densa, pequeno e arredondado, típico mineiro
+- BOLO DE TRIGO: mais claro, textura esponjosa, mais alto e leve
+- MAÇÃ: vermelha/verde, redonda, brilhante, casca lisa
+- MANGA: amarela/laranja/verde, oval, polpa laranja/amarela
 
 Use calorias EXATAS da tabela TACO brasileira.
-Indique confiança de 0-100 para cada alimento.
+Indique confiança 0-100 para cada alimento.
 
-Responda SOMENTE JSON válido:
+Responda SOMENTE JSON válido sem markdown:
 {
   "refeicao": "nome da refeição",
   "alimentos": [
     {
       "nome": "nome exato em português",
       "peso_estimado_g": número,
-      "calorias": número baseado na TACO,
+      "calorias": número baseado TACO,
       "porcao": "descrição da porção",
       "confianca": número 0-100,
-      "alternativa": "outro alimento possível ou null"
+      "alternativa": "outro alimento possível se confiança < 80 ou null"
     }
   ],
   "total_calorias": número,
-  "observacao": "comentário nutricional",
+  "observacao": "comentário nutricional breve",
   "precisao_geral": número 0-100
 }`,
       messages: [{
@@ -148,7 +152,6 @@ function LoadingEtapas({ etapa }) {
   );
 }
 
-// ── Badge confiança ───────────────────────────────────────
 function ConfBadge({ v, alt }) {
   const cor = v >= 90 ? "#0F6E56" : v >= 70 ? "#633806" : "#791F1F";
   const bg  = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
@@ -162,7 +165,6 @@ function ConfBadge({ v, alt }) {
   );
 }
 
-// ── Componente principal ──────────────────────────────────
 export default function NutriScan({ paciente }) {
   const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
   const meta = paciente?.meta_kcal || 1850;
@@ -186,10 +188,6 @@ export default function NutriScan({ paciente }) {
     }, 2500);
   };
 
-  const pararLoading = () => {
-    clearInterval(timerRef.current);
-  };
-
   useEffect(() => () => clearInterval(timerRef.current), []);
 
   const handleArquivo = useCallback((file) => {
@@ -211,17 +209,17 @@ export default function NutriScan({ paciente }) {
     iniciarLoading();
     try {
       const analise = await analisarComIA(base64);
-      pararLoading();
+      clearInterval(timerRef.current);
       setResultado(analise);
-      setAlimentos(analise.alimentos.map(a => ({ ...a, editandoNome: false })));
+      setAlimentos(analise.alimentos.map(a => ({ ...a, editandoNome: false, taco_atualizado: false })));
       setStatus("confirmando");
     } catch (e) {
-      pararLoading();
+      clearInterval(timerRef.current);
       setErro(e.message); setStatus("erro");
     }
   };
 
-  // Atualiza nome E recalcula calorias pela TACO
+  // Atualiza nome E recalcula calorias pela TACO automaticamente
   const atualizarNome = (idx, novoNome) => {
     setAlimentos(prev => prev.map((a, i) => {
       if (i !== idx) return a;
@@ -263,7 +261,7 @@ export default function NutriScan({ paciente }) {
   const totalConfirmado = alimentos.reduce((s, a) => s + (Number(a.calorias) || 0), 0);
   const pct = Math.min(100, Math.round((totalConfirmado / meta) * 100));
   const precisao = resultado?.precisao_geral || 0;
-  const emojis = ["🍚","🫘","🥦","🍗","🥕","🍳","🐟","🥗","🧀","🍞","🥩","🍅","🥑","🍌","🍊","🍎"];
+  const emojis = ["🍚","🫘","🥦","🍗","🥕","🍳","🐟","🥗","🧀","🍞","🥩","🍅","🥑","🍌","🍊","🍎","🥭","🍇"];
 
   return (
     <div style={{ minHeight: "calc(100vh - 52px)", background: "#F7F5F0", fontFamily: "system-ui, sans-serif" }}>
@@ -272,7 +270,7 @@ export default function NutriScan({ paciente }) {
         @keyframes fadeUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
       `}</style>
 
-      {/* Header */}
+      {/* Header verde */}
       <div style={{ background: "#1E5C3A", padding: "20px 16px 24px", color: "white" }}>
         <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 2 }}>Bom dia! 👋 {paciente?.nome?.split(" ")[0] || ""}</div>
         <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Meu prato de hoje</div>
@@ -296,7 +294,7 @@ export default function NutriScan({ paciente }) {
 
       <div style={{ padding: 16 }}>
 
-        {/* Upload — só mostra quando não está confirmando */}
+        {/* Upload */}
         {status !== "confirmando" && !enviado && (
           <>
             <div
@@ -332,7 +330,7 @@ export default function NutriScan({ paciente }) {
           </>
         )}
 
-        {/* Loading com etapas */}
+        {/* Loading */}
         {(status === "analisando" || status === "salvando") && (
           <LoadingEtapas etapa={status === "salvando" ? 3 : etapaLoading} />
         )}
@@ -346,7 +344,7 @@ export default function NutriScan({ paciente }) {
           </div>
         )}
 
-        {/* Tela de confirmação */}
+        {/* Confirmação */}
         {status === "confirmando" && resultado && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
 
@@ -366,7 +364,7 @@ export default function NutriScan({ paciente }) {
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
-              ✏️ Confirme os alimentos — toque no nome para editar
+              ✏️ Confirme — toque no nome para editar e recalcular pela TACO
             </div>
 
             {alimentos.map((a, i) => (
@@ -385,10 +383,12 @@ export default function NutriScan({ paciente }) {
                         style={{ width: "100%", border: "1.5px solid #1E5C3A", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: 700, outline: "none", boxSizing: "border-box" }}
                       />
                     ) : (
-                      <div onClick={() => setAlimentos(prev => prev.map((x, xi) => xi === i ? { ...x, editandoNome: true } : x))} style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", cursor: "text", display: "flex", alignItems: "center", gap: 4 }}>
+                      <div onClick={() => setAlimentos(prev => prev.map((x, xi) => xi === i ? { ...x, editandoNome: true } : x))} style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", cursor: "text", display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                         {a.nome}
                         <span style={{ fontSize: 11, color: "#1E5C3A" }}>✏️</span>
-                        {a.taco_atualizado && <span style={{ fontSize: 10, color: "#0F6E56", background: "#EEF7F2", borderRadius: 4, padding: "1px 5px" }}>TACO ✓</span>}
+                        {a.taco_atualizado && (
+                          <span style={{ fontSize: 10, color: "#0F6E56", background: "#EEF7F2", borderRadius: 4, padding: "1px 6px", fontWeight: 700 }}>TACO ✓</span>
+                        )}
                       </div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
@@ -442,6 +442,8 @@ export default function NutriScan({ paciente }) {
           </div>
         )}
       </div>
+
+      <Rodape />
     </div>
   );
 }
