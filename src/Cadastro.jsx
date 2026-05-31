@@ -4,26 +4,26 @@ import Rodape from "./Rodape";
 
 const OBJETIVOS = [
   { id: "emagrecimento", label: "⚖️ Emagrecimento", meta: 1500 },
-  { id: "ganho_massa",   label: "💪 Ganho de massa", meta: 2500 },
-  { id: "saude_geral",   label: "🌱 Saúde geral",    meta: 1850 },
+  { id: "ganho_massa", label: "💪 Ganho de massa", meta: 2500 },
+  { id: "saude_geral", label: "🌱 Saúde geral", meta: 1850 },
 ];
 
 export default function Cadastro({ onCadastrado }) {
-  const [etapa, setEtapa]     = useState("inicio");
-  const [nome, setNome]       = useState("");
-  const [email, setEmail]     = useState("");
-  const [senha, setSenha]     = useState("");
+  const [etapa, setEtapa] = useState("inicio");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [objetivo, setObjetivo] = useState("");
   const [loading, setLoading] = useState(false);
-  const [erro, setErro]       = useState("");
+  const [erro, setErro] = useState("");
 
-  const [cNome, setCNome]         = useState("");
-  const [cEmail, setCEmail]       = useState("");
-  const [cCelular, setCCelular]   = useState("");
+  const [cNome, setCNome] = useState("");
+  const [cEmail, setCEmail] = useState("");
+  const [cCelular, setCCelular] = useState("");
   const [cMensagem, setCMensagem] = useState("");
-  const [cLoading, setCLoading]   = useState(false);
-  const [cErro, setCErro]         = useState("");
-  const [mostrarSenha, setMostrarSenha] = useState(false); 
+  const [cLoading, setCLoading] = useState(false);
+  const [cErro, setCErro] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const cadastrar = async () => {
     if (!nome || !email || !senha || !objetivo) { setErro("Preencha todos os campos."); return; }
@@ -97,7 +97,7 @@ export default function Cadastro({ onCadastrado }) {
             <div style={{ fontWeight: 800, fontSize: 20, color: "#1a1a1a", marginBottom: 6 }}>Bem-vindo ao NutriScan! 👋</div>
             <div style={{ fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.6 }}>Fotografe seus pratos e receba análise calórica por IA. Sua nutricionista acompanha tudo em tempo real.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-              {[["🤖","IA identifica alimentos automaticamente"],["📊","Calorias calculadas pela tabela TACO"],["👩‍⚕️","Nutricionista acompanha seu progresso"],["📱","Funciona no celular pela câmera"]].map(([icon, text], i) => (
+              {[["🤖", "IA identifica alimentos automaticamente"], ["📊", "Calorias calculadas pela tabela TACO"], ["👩‍⚕️", "Nutricionista acompanha seu progresso"], ["📱", "Funciona no celular pela câmera"]].map(([icon, text], i) => (
                 <div key={i} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <span style={{ fontSize: 18 }}>{icon}</span>
                   <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
@@ -128,7 +128,21 @@ export default function Cadastro({ onCadastrado }) {
             {input(nome, setNome, "Nome completo")}
             {input(email, setEmail, "Seu melhor e-mail", "email")}
             <div style={{ position: "relative", marginBottom: 10 }}>
-                {erro && <div style={{ color: "#C00", fontSize: 12, marginBottom: 10 }}>{erro}</div>}
+              <input
+                value={senha}
+                onChange={e => setSenha(e.target.value)}
+                placeholder="Crie uma senha"
+                type={mostrarSenha ? "text" : "password"}
+                style={{ width: "100%", border: "1px solid #E8E8E0", borderRadius: 10, padding: "10px 40px 10px 12px", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+              />
+              <button
+                onClick={() => setMostrarSenha(p => !p)}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}
+              >
+                {mostrarSenha ? "🙈" : "👁️"}
+              </button>
+            </div>
+            {erro && <div style={{ color: "#C00", fontSize: 12, marginBottom: 10 }}>{erro}</div>}
             <button onClick={() => { if (!nome || !email || !senha) { setErro("Preencha todos os campos."); return; } setErro(""); setEtapa("objetivo"); }} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Continuar →</button>
             <button onClick={() => { setEtapa("inicio"); setErro(""); }} style={{ width: "100%", background: "transparent", color: "#666", border: "none", fontSize: 13, cursor: "pointer", padding: 8, marginTop: 4 }}>← Voltar</button>
           </div>
