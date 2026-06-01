@@ -205,7 +205,6 @@ export default function Cadastro({ onCadastrado }) {
       </div>
 
       {/* Rodapé */}
-      <Rodape />
-    </div>
+          </div>
   );
 }
