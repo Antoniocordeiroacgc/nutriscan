@@ -5,10 +5,10 @@ function totalKcal(refs) { return refs.reduce((s, r) => s + (r.total_kcal || 0),
 
 function statusPaciente(total, meta) {
   const pct = total / meta;
-  if (total === 0)  return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
-  if (pct < 0.5)   return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
-  if (pct > 1.1)   return { label: "Acima do limite",  bg: "#FAEEDA", color: "#633806" };
-  return             { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
+  if (total === 0) return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
+  if (pct < 0.5) return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
+  if (pct > 1.1) return { label: "Acima do limite", bg: "#FAEEDA", color: "#633806" };
+  return { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
 }
 
 function hora(iso) {
@@ -16,8 +16,8 @@ function hora(iso) {
   return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-const CORES = ["#4CAF82","#378ADD","#D4537E","#EF9F27","#7F77DD","#E24B4A"];
-const BGS   = ["#EEF7F2","#E6F1FB","#FBEAF0","#FAEEDA","#EEEDFE","#FCEBEB"];
+const CORES = ["#4CAF82", "#378ADD", "#D4537E", "#EF9F27", "#7F77DD", "#E24B4A"];
+const BGS = ["#EEF7F2", "#E6F1FB", "#FBEAF0", "#FAEEDA", "#EEEDFE", "#FCEBEB"];
 
 function Avatar({ nome, size = 40, idx = 0 }) {
   const initials = nome?.split(" ").map(n => n[0]).slice(0, 2).join("") || "?";
@@ -28,23 +28,27 @@ function Avatar({ nome, size = 40, idx = 0 }) {
   );
 }
 
-export default function NutriDashboard() {
-  const [pacientes, setPacientes]     = useState([]);
-  const [refeicoes, setRefeicoes]     = useState({});
+export default function NutriDashboard({ pacienteLogado }) {
+  const [pacientes, setPacientes] = useState([]);
+  const [refeicoes, setRefeicoes] = useState({});
   const [selecionado, setSelecionado] = useState(null);
-  const [selIdx, setSelIdx]           = useState(0);
-  const [busca, setBusca]             = useState("");
-  const [carregando, setCarregando]   = useState(true);
-  const [nota, setNota]               = useState({});
+  const [selIdx, setSelIdx] = useState(0);
+  const [busca, setBusca] = useState("");
+  const [carregando, setCarregando] = useState(true);
+  const [nota, setNota] = useState({});
   const [notaEnviada, setNotaEnviada] = useState({});
-  const [fotoModal, setFotoModal]     = useState(null);
-  const [view, setView]               = useState("lista");
+  const [fotoModal, setFotoModal] = useState(null);
+  const [view, setView] = useState("lista");
 
   useEffect(() => { carregar(); }, []);
 
   async function carregar() {
     setCarregando(true);
-    const { data } = await supabase.from("pacientes").select("*").order("nome");
+    const { data } = await supabase
+      .from("pacientes")
+      .select("*")
+      .eq("id", pacienteLogado?.id)
+      .order("nome");
     if (data?.length > 0) {
       setPacientes(data);
       await selecionarPaciente(data[0], 0);
@@ -77,13 +81,13 @@ export default function NutriDashboard() {
     p.email?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const refs      = selecionado ? (refeicoes[selecionado.id] || []) : [];
-  const total     = totalKcal(refs);
-  const meta      = selecionado?.meta_kcal || 1800;
-  const pct       = Math.min(100, Math.round((total / meta) * 100));
-  const st        = selecionado ? statusPaciente(total, meta) : null;
+  const refs = selecionado ? (refeicoes[selecionado.id] || []) : [];
+  const total = totalKcal(refs);
+  const meta = selecionado?.meta_kcal || 1800;
+  const pct = Math.min(100, Math.round((total / meta) * 100));
+  const st = selecionado ? statusPaciente(total, meta) : null;
   const progColor = pct > 110 ? "#E24B4A" : pct < 50 ? "#EF9F27" : "#1E5C3A";
-  const isMobile  = window.innerWidth < 768;
+  const isMobile = window.innerWidth < 768;
 
   const Sidebar = () => (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "white", borderRight: "1px solid #F0EFE8" }}>
@@ -120,9 +124,9 @@ export default function NutriDashboard() {
         {carregando ? (
           <div style={{ textAlign: "center", padding: 24, color: "#aaa", fontSize: 13 }}>Carregando...</div>
         ) : filtrados.map((p, i) => {
-          const r   = refeicoes[p.id] || [];
+          const r = refeicoes[p.id] || [];
           const tot = totalKcal(r);
-          const s   = statusPaciente(tot, p.meta_kcal || 1800);
+          const s = statusPaciente(tot, p.meta_kcal || 1800);
           const ativo = selecionado?.id === p.id;
           return (
             <div key={p.id} onClick={() => selecionarPaciente(p, i)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", cursor: "pointer", borderBottom: "1px solid #F7F5F0", background: ativo ? "#EEF7F2" : "white", borderLeft: `3px solid ${ativo ? "#1E5C3A" : "transparent"}` }}>
@@ -169,9 +173,9 @@ export default function NutriDashboard() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
           {[
             { label: "Consumido", val: total + " kcal", color: "#1E5C3A" },
-            { label: "Meta",      val: meta + " kcal",  color: "#378ADD" },
-            { label: "Saldo",     val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
-            { label: "Adesão",    val: pct + "%", color: progColor },
+            { label: "Meta", val: meta + " kcal", color: "#378ADD" },
+            { label: "Saldo", val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
+            { label: "Adesão", val: pct + "%", color: progColor },
           ].map((m, i) => (
             <div key={i} style={{ background: "white", borderRadius: 12, padding: "10px 12px", border: "1px solid #F0EFE8" }}>
               <div style={{ fontSize: 11, color: "#aaa", marginBottom: 3 }}>{m.label}</div>

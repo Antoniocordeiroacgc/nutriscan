@@ -7,8 +7,8 @@ import Tutorial from "./Tutorial";
 import Rodape from "./Rodape";
 
 export default function App() {
-  const [tela, setTela]             = useState("cadastro");
-  const [paciente, setPaciente]     = useState(null);
+  const [tela, setTela] = useState("cadastro");
+  const [paciente, setPaciente] = useState(null);
   const [mostrarTutorial, setMostrarTutorial] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function App() {
         const p = JSON.parse(salvo);
         if (p?.id) { setPaciente(p); setTela("paciente"); }
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const onCadastrado = (p) => {
@@ -45,7 +45,7 @@ export default function App() {
   };
 
   if (tela === "cadastro") return <Cadastro onCadastrado={onCadastrado} />;
-  if (tela === "admin")    return <AdminPanel onSair={() => setTela("paciente")} />;
+  if (tela === "admin") return <AdminPanel onSair={() => setTela("paciente")} />;
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: "#F7F5F0", display: "flex", flexDirection: "column" }}>
@@ -70,7 +70,7 @@ export default function App() {
 
         {/* Toggle */}
         <div style={{ display: "flex", background: "rgba(0,0,0,0.25)", borderRadius: 99, padding: 3, gap: 2 }}>
-          {[["paciente","📱"],["nutricionista","👩‍⚕️"]].map(([key, icon]) => (
+          {[["paciente", "📱"], ["nutricionista", "👩‍⚕️"]].map(([key, icon]) => (
             <button key={key} onClick={() => setTela(key)} style={{ background: tela === key ? "white" : "transparent", color: tela === key ? "#1E5C3A" : "rgba(255,255,255,0.7)", border: "none", borderRadius: 99, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
               {icon}
             </button>
@@ -107,7 +107,7 @@ export default function App() {
         )}
         {tela === "nutricionista" && (
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <NutriDashboard />
+            <NutriDashboard pacienteLogado={paciente} />
             <Rodape />
           </div>
         )}
