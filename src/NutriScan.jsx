@@ -613,10 +613,10 @@ function calcularMacros(nome, pesoG) {
   if (!encontrado) return null;
   const fator = pesoG / 100;
   return {
-    kcal:  Math.round(encontrado.kcal  * fator),
-    prot:  Math.round(encontrado.prot  * fator * 10) / 10,
-    lip:   Math.round(encontrado.lip   * fator * 10) / 10,
-    carb:  Math.round(encontrado.carb  * fator * 10) / 10,
+    kcal: Math.round(encontrado.kcal * fator),
+    prot: Math.round(encontrado.prot * fator * 10) / 10,
+    lip: Math.round(encontrado.lip * fator * 10) / 10,
+    carb: Math.round(encontrado.carb * fator * 10) / 10,
     fibra: Math.round(encontrado.fibra * fator * 10) / 10,
   };
 }
@@ -727,7 +727,7 @@ function LoadingEtapas({ etapa }) {
 
 function ConfBadge({ v, alt }) {
   const cor = v >= 90 ? "#0F6E56" : v >= 70 ? "#633806" : "#791F1F";
-  const bg  = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
+  const bg = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
       <div style={{ background: bg, color: cor, borderRadius: 99, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>
@@ -757,17 +757,23 @@ export default function NutriScan({ paciente }) {
   const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
   const meta = paciente?.meta_kcal || 1850;
 
-  const [imagem, setImagem]             = useState(null);
-  const [base64, setBase64]             = useState(null);
-  const [fotoFile, setFotoFile]         = useState(null);
-  const [status, setStatus]             = useState("idle");
+  const [imagem, setImagem] = useState(null);
+  const [base64, setBase64] = useState(null);
+  const [fotoFile, setFotoFile] = useState(null);
+  const [status, setStatus] = useState("idle");
   const [etapaLoading, setEtapaLoading] = useState(0);
-  const [resultado, setResultado]       = useState(null);
-  const [alimentos, setAlimentos]       = useState([]);
-  const [erro, setErro]                 = useState("");
-  const [enviado, setEnviado]           = useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [alimentos, setAlimentos] = useState([]);
+  const [erro, setErro] = useState("");
+  const [enviado, setEnviado] = useState(false);
   const fileRef = useRef();
   const timerRef = useRef();
+  const [mostrarAviso, setMostrarAviso] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMostrarAviso(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const iniciarLoading = () => {
     setEtapaLoading(0);
@@ -850,13 +856,13 @@ export default function NutriScan({ paciente }) {
   };
 
   const totalConfirmado = alimentos.reduce((s, a) => s + (Number(a.calorias) || 0), 0);
-  const totalProt  = alimentos.reduce((s, a) => s + (a.macros?.prot  || 0), 0);
-  const totalCarb  = alimentos.reduce((s, a) => s + (a.macros?.carb  || 0), 0);
-  const totalLip   = alimentos.reduce((s, a) => s + (a.macros?.lip   || 0), 0);
+  const totalProt = alimentos.reduce((s, a) => s + (a.macros?.prot || 0), 0);
+  const totalCarb = alimentos.reduce((s, a) => s + (a.macros?.carb || 0), 0);
+  const totalLip = alimentos.reduce((s, a) => s + (a.macros?.lip || 0), 0);
   const totalFibra = alimentos.reduce((s, a) => s + (a.macros?.fibra || 0), 0);
   const pct = Math.min(100, Math.round((totalConfirmado / meta) * 100));
   const precisao = resultado?.precisao_geral || 0;
-  const emojis = ["🍚","🫘","🥦","🍗","🥕","🍳","🐟","🥗","🧀","🍞","🥩","🍅","🥑","🍌","🍊","🍎","🥭","🍇","🫐","🥝"];
+  const emojis = ["🍚", "🫘", "🥦", "🍗", "🥕", "🍳", "🐟", "🥗", "🧀", "🍞", "🥩", "🍅", "🥑", "🍌", "🍊", "🍎", "🥭", "🍇", "🫐", "🥝"];
 
   return (
     <div style={{ minHeight: "calc(100vh - 52px)", background: "#F7F5F0", fontFamily: "system-ui, sans-serif" }}>
@@ -888,6 +894,23 @@ export default function NutriScan({ paciente }) {
       </div>
 
       <div style={{ padding: 16 }}>
+        {mostrarAviso && (
+          <div style={{
+            background: "#1E5C3A", color: "white", borderRadius: 14,
+            padding: "14px 16px", marginBottom: 16, display: "flex",
+            gap: 10, alignItems: "flex-start", animation: "fadeUp 0.4s ease"
+          }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>⚕️</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
+                ATENÇÃO
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>
+                É fundamental o acompanhamento de um nutricionista. Em breve terá lista de Nutricionistas cadastradas no NutriScan!
+              </div>
+            </div>
+          </div>
+        )}
 
         {status !== "confirmando" && !enviado && (
           <>
