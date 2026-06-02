@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import Rodape from "./Rodape";
 
-// Tabela TACO completa — 4ª edição UNICAMP — 591 alimentos
 const TACO = {
   "arroz, integral, cozido": { kcal: 124, prot: 2.6, lip: 1.0, carb: 25.8, fibra: 2.7 },
   "arroz, integral, cru": { kcal: 360, prot: 7.3, lip: 1.9, carb: 77.5, fibra: 4.8 },
@@ -600,9 +599,7 @@ const TACO = {
 function calcularMacros(nome, pesoG) {
   const n = nome.toLowerCase().trim();
   let encontrado = null;
-  // Busca exata
   if (TACO[n]) encontrado = TACO[n];
-  // Busca parcial
   if (!encontrado) {
     for (const [alimento, vals] of Object.entries(TACO)) {
       if (n.includes(alimento) || alimento.includes(n)) {
@@ -613,27 +610,15 @@ function calcularMacros(nome, pesoG) {
   if (!encontrado) return null;
   const fator = pesoG / 100;
   return {
-    kcal: Math.round(encontrado.kcal * fator),
-    prot: Math.round(encontrado.prot * fator * 10) / 10,
-    lip: Math.round(encontrado.lip * fator * 10) / 10,
-    carb: Math.round(encontrado.carb * fator * 10) / 10,
+    kcal:  Math.round(encontrado.kcal  * fator),
+    prot:  Math.round(encontrado.prot  * fator * 10) / 10,
+    lip:   Math.round(encontrado.lip   * fator * 10) / 10,
+    carb:  Math.round(encontrado.carb  * fator * 10) / 10,
     fibra: Math.round(encontrado.fibra * fator * 10) / 10,
   };
 }
 
-async function analisarComIA(base64Data) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: 1500,
-      system: `Você é nutricionista brasileiro especialista na Tabela TACO 4ª edição UNICAMP.
+const SYSTEM_PROMPT = `Você é nutricionista brasileiro especialista na Tabela TACO 4ª edição UNICAMP.
 
 Analise a foto com MÁXIMA ATENÇÃO visual. Diferencie:
 - ABACATE: casca verde/escura rugosa, oval, polpa verde/amarela cremosa — NUNCA confunda com pera
@@ -645,8 +630,7 @@ Analise a foto com MÁXIMA ATENÇÃO visual. Diferencie:
 - BOLO DE QUEIJO: amarelado, denso, pequeno, típico mineiro
 - BOLO DE TRIGO: mais claro, esponjoso, mais alto
 
-Use os nomes EXATOS da tabela TACO (ex: "arroz, tipo 1, cozido", "feijão, carioca, cozido").
-Indique confiança 0-100 para cada alimento.
+Use os nomes EXATOS da tabela TACO. Indique confiança 0-100 para cada alimento.
 
 Responda SOMENTE JSON válido sem markdown:
 {
@@ -664,19 +648,17 @@ Responda SOMENTE JSON válido sem markdown:
   "total_calorias": número,
   "observacao": "comentário nutricional breve",
   "precisao_geral": número 0-100
-}`,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64Data } },
-          { type: "text", text: "Analise este prato com máxima precisão e retorne o JSON nutricional TACO." }
-        ]
-      }]
-    })
+}`;
+
+async function analisarComIA(base64Data) {
+  const response = await fetch("/api/analisar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ base64: base64Data, prompt: SYSTEM_PROMPT }),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Erro ${response.status}`);
+    throw new Error(err?.error || `Erro ${response.status}`);
   }
   const data = await response.json();
   const text = data.content.map(b => b.text || "").join("");
@@ -727,7 +709,7 @@ function LoadingEtapas({ etapa }) {
 
 function ConfBadge({ v, alt }) {
   const cor = v >= 90 ? "#0F6E56" : v >= 70 ? "#633806" : "#791F1F";
-  const bg = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
+  const bg  = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
       <div style={{ background: bg, color: cor, borderRadius: 99, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>
@@ -738,37 +720,22 @@ function ConfBadge({ v, alt }) {
   );
 }
 
-function MacroBar({ label, val, max, color, unit = "g" }) {
-  const pct = max > 0 ? Math.min(100, Math.round(val / max * 100)) : 0;
-  return (
-    <div style={{ marginBottom: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 2 }}>
-        <span style={{ color: "#888" }}>{label}</span>
-        <span style={{ color, fontWeight: 700 }}>{val}{unit}</span>
-      </div>
-      <div style={{ background: "#F0EFE8", borderRadius: 99, height: 4, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, background: color, height: "100%", borderRadius: 99 }} />
-      </div>
-    </div>
-  );
-}
-
 export default function NutriScan({ paciente }) {
   const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
   const meta = paciente?.meta_kcal || 1850;
 
-  const [imagem, setImagem] = useState(null);
-  const [base64, setBase64] = useState(null);
-  const [fotoFile, setFotoFile] = useState(null);
-  const [status, setStatus] = useState("idle");
+  const [imagem, setImagem]             = useState(null);
+  const [base64, setBase64]             = useState(null);
+  const [fotoFile, setFotoFile]         = useState(null);
+  const [status, setStatus]             = useState("idle");
   const [etapaLoading, setEtapaLoading] = useState(0);
-  const [resultado, setResultado] = useState(null);
-  const [alimentos, setAlimentos] = useState([]);
-  const [erro, setErro] = useState("");
-  const [enviado, setEnviado] = useState(false);
+  const [resultado, setResultado]       = useState(null);
+  const [alimentos, setAlimentos]       = useState([]);
+  const [erro, setErro]                 = useState("");
+  const [enviado, setEnviado]           = useState(false);
+  const [mostrarAviso, setMostrarAviso] = useState(true);
   const fileRef = useRef();
   const timerRef = useRef();
-  const [mostrarAviso, setMostrarAviso] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setMostrarAviso(false), 4000);
@@ -820,14 +787,7 @@ export default function NutriScan({ paciente }) {
     setAlimentos(prev => prev.map((a, i) => {
       if (i !== idx) return a;
       const macros = calcularMacros(novoNome, a.peso_estimado_g);
-      return {
-        ...a,
-        nome: novoNome,
-        editandoNome: false,
-        calorias: macros ? macros.kcal : a.calorias,
-        taco_atualizado: !!macros,
-        macros,
-      };
+      return { ...a, nome: novoNome, editandoNome: false, calorias: macros ? macros.kcal : a.calorias, taco_atualizado: !!macros, macros };
     }));
   };
 
@@ -856,19 +816,20 @@ export default function NutriScan({ paciente }) {
   };
 
   const totalConfirmado = alimentos.reduce((s, a) => s + (Number(a.calorias) || 0), 0);
-  const totalProt = alimentos.reduce((s, a) => s + (a.macros?.prot || 0), 0);
-  const totalCarb = alimentos.reduce((s, a) => s + (a.macros?.carb || 0), 0);
-  const totalLip = alimentos.reduce((s, a) => s + (a.macros?.lip || 0), 0);
+  const totalProt  = alimentos.reduce((s, a) => s + (a.macros?.prot  || 0), 0);
+  const totalCarb  = alimentos.reduce((s, a) => s + (a.macros?.carb  || 0), 0);
+  const totalLip   = alimentos.reduce((s, a) => s + (a.macros?.lip   || 0), 0);
   const totalFibra = alimentos.reduce((s, a) => s + (a.macros?.fibra || 0), 0);
   const pct = Math.min(100, Math.round((totalConfirmado / meta) * 100));
   const precisao = resultado?.precisao_geral || 0;
-  const emojis = ["🍚", "🫘", "🥦", "🍗", "🥕", "🍳", "🐟", "🥗", "🧀", "🍞", "🥩", "🍅", "🥑", "🍌", "🍊", "🍎", "🥭", "🍇", "🫐", "🥝"];
+  const emojis = ["🍚","🫘","🥦","🍗","🥕","🍳","🐟","🥗","🧀","🍞","🥩","🍅","🥑","🍌","🍊","🍎","🥭","🍇","🫐","🥝"];
 
   return (
     <div style={{ minHeight: "calc(100vh - 52px)", background: "#F7F5F0", fontFamily: "system-ui, sans-serif" }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+        @keyframes fadeOut { from { opacity:1 } to { opacity:0 } }
       `}</style>
 
       {/* Header */}
@@ -894,17 +855,13 @@ export default function NutriScan({ paciente }) {
       </div>
 
       <div style={{ padding: 16 }}>
+
+        {/* Aviso nutricional — some após 4 segundos */}
         {mostrarAviso && (
-          <div style={{
-            background: "#1E5C3A", color: "white", borderRadius: 14,
-            padding: "14px 16px", marginBottom: 16, display: "flex",
-            gap: 10, alignItems: "flex-start", animation: "fadeUp 0.4s ease"
-          }}>
+          <div style={{ background: "#1E5C3A", color: "white", borderRadius: 14, padding: "14px 16px", marginBottom: 16, display: "flex", gap: 10, alignItems: "flex-start", animation: "fadeUp 0.4s ease" }}>
             <span style={{ fontSize: 20, flexShrink: 0 }}>⚕️</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
-                ATENÇÃO
-              </div>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>ATENÇÃO</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>
                 É fundamental o acompanhamento de um nutricionista. Em breve terá lista de Nutricionistas cadastradas no NutriScan!
               </div>
@@ -961,16 +918,11 @@ export default function NutriScan({ paciente }) {
           <div style={{ animation: "fadeUp 0.4s ease" }}>
             {imagem && <img src={imagem} alt="prato" style={{ width: "100%", borderRadius: 16, maxHeight: 200, objectFit: "cover", marginBottom: 12 }} />}
 
-            {/* Precisão */}
             <div style={{ background: precisao >= 85 ? "#EEF7F2" : precisao >= 70 ? "#FAEEDA" : "#FCEBEB", border: `1px solid ${precisao >= 85 ? "#C8E6D4" : precisao >= 70 ? "#F0D9A0" : "#FFD0D0"}`, borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ fontSize: 22 }}>{precisao >= 85 ? "🎯" : precisao >= 70 ? "⚠️" : "❓"}</div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: precisao >= 85 ? "#0F6E56" : precisao >= 70 ? "#633806" : "#791F1F" }}>
-                  Precisão da análise: {precisao}%
-                </div>
-                <div style={{ fontSize: 11, color: "#888" }}>
-                  {precisao >= 85 ? "Boa precisão — confirme e envie!" : "Verifique os itens antes de enviar"}
-                </div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: precisao >= 85 ? "#0F6E56" : precisao >= 70 ? "#633806" : "#791F1F" }}>Precisão da análise: {precisao}%</div>
+                <div style={{ fontSize: 11, color: "#888" }}>{precisao >= 85 ? "Boa precisão — confirme e envie!" : "Verifique os itens antes de enviar"}</div>
               </div>
             </div>
 
@@ -986,13 +938,8 @@ export default function NutriScan({ paciente }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {a.editandoNome ? (
-                      <input
-                        defaultValue={a.nome}
-                        autoFocus
-                        onBlur={e => atualizarNome(i, e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && atualizarNome(i, e.target.value)}
-                        style={{ width: "100%", border: "1.5px solid #1E5C3A", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: 700, outline: "none", boxSizing: "border-box" }}
-                      />
+                      <input defaultValue={a.nome} autoFocus onBlur={e => atualizarNome(i, e.target.value)} onKeyDown={e => e.key === "Enter" && atualizarNome(i, e.target.value)}
+                        style={{ width: "100%", border: "1.5px solid #1E5C3A", borderRadius: 6, padding: "4px 8px", fontSize: 13, fontWeight: 700, outline: "none", boxSizing: "border-box" }} />
                     ) : (
                       <div onClick={() => setAlimentos(prev => prev.map((x, xi) => xi === i ? { ...x, editandoNome: true } : x))} style={{ fontWeight: 700, fontSize: 14, color: "#1a1a1a", cursor: "text", display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                         {a.nome} <span style={{ fontSize: 11, color: "#1E5C3A" }}>✏️</span>
@@ -1001,13 +948,14 @@ export default function NutriScan({ paciente }) {
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
                       <span style={{ fontSize: 11, color: "#aaa" }}>{a.porcao} · {a.peso_estimado_g}g</span>
-                      <input type="number" value={a.calorias} onChange={e => atualizarCalorias(i, e.target.value)} style={{ width: 58, border: "1px solid #E8E8E0", borderRadius: 6, padding: "2px 6px", fontSize: 12, outline: "none", color: "#1E5C3A", fontWeight: 700 }} />
+                      <input type="number" value={a.calorias} onChange={e => atualizarCalorias(i, e.target.value)}
+                        style={{ width: 58, border: "1px solid #E8E8E0", borderRadius: 6, padding: "2px 6px", fontSize: 12, outline: "none", color: "#1E5C3A", fontWeight: 700 }} />
                       <span style={{ fontSize: 11, color: "#aaa" }}>kcal</span>
                     </div>
                     {a.macros && (
-                      <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                        {[["💪", a.macros.prot, "#378ADD", "prot"], ["🍞", a.macros.carb, "#EF9F27", "carb"], ["🥑", a.macros.lip, "#E24B4A", "lip"], ["🌾", a.macros.fibra, "#4CAF82", "fibra"]].map(([icon, val, color, label]) => (
-                          <div key={label} style={{ display: "flex", alignItems: "center", gap: 3, background: "#F7F5F0", borderRadius: 6, padding: "2px 6px" }}>
+                      <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                        {[["💪", a.macros.prot, "#378ADD"], ["🍞", a.macros.carb, "#EF9F27"], ["🥑", a.macros.lip, "#E24B4A"], ["🌾", a.macros.fibra, "#4CAF82"]].map(([icon, val, color], j) => (
+                          <div key={j} style={{ display: "flex", alignItems: "center", gap: 3, background: "#F7F5F0", borderRadius: 6, padding: "2px 6px" }}>
                             <span style={{ fontSize: 10 }}>{icon}</span>
                             <span style={{ fontSize: 10, color, fontWeight: 700 }}>{val}g</span>
                           </div>
@@ -1023,20 +971,24 @@ export default function NutriScan({ paciente }) {
               </div>
             ))}
 
-            {/* Resumo de macros */}
+            {/* Resumo macros */}
             {alimentos.some(a => a.macros) && (
               <div style={{ background: "white", borderRadius: 14, padding: "12px 16px", marginBottom: 12, border: "1px solid #F0EFE8" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
-                  📊 Macronutrientes da refeição
-                </div>
-                <MacroBar label="💪 Proteínas" val={Math.round(totalProt * 10) / 10} max={150} color="#378ADD" />
-                <MacroBar label="🍞 Carboidratos" val={Math.round(totalCarb * 10) / 10} max={300} color="#EF9F27" />
-                <MacroBar label="🥑 Gorduras" val={Math.round(totalLip * 10) / 10} max={100} color="#E24B4A" />
-                <MacroBar label="🌾 Fibras" val={Math.round(totalFibra * 10) / 10} max={30} color="#4CAF82" />
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>📊 Macronutrientes</div>
+                {[
+                  { label: "💪 Proteínas", val: Math.round(totalProt * 10) / 10, color: "#378ADD" },
+                  { label: "🍞 Carboidratos", val: Math.round(totalCarb * 10) / 10, color: "#EF9F27" },
+                  { label: "🥑 Gorduras", val: Math.round(totalLip * 10) / 10, color: "#E24B4A" },
+                  { label: "🌾 Fibras", val: Math.round(totalFibra * 10) / 10, color: "#4CAF82" },
+                ].map((m, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "4px 0", borderBottom: i < 3 ? "1px solid #F7F5F0" : "none" }}>
+                    <span style={{ color: "#666" }}>{m.label}</span>
+                    <span style={{ color: m.color, fontWeight: 700 }}>{m.val}g</span>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Total */}
             <div style={{ background: "#1E5C3A", borderRadius: 12, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, color: "white" }}>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Total confirmado</div>
               <div style={{ fontSize: 24, fontWeight: 800 }}>{totalConfirmado} <span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)" }}>kcal</span></div>
