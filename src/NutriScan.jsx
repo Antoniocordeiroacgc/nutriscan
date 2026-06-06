@@ -610,10 +610,10 @@ function calcularMacros(nome, pesoG) {
   if (!encontrado) return null;
   const fator = pesoG / 100;
   return {
-    kcal:  Math.round(encontrado.kcal  * fator),
-    prot:  Math.round(encontrado.prot  * fator * 10) / 10,
-    lip:   Math.round(encontrado.lip   * fator * 10) / 10,
-    carb:  Math.round(encontrado.carb  * fator * 10) / 10,
+    kcal: Math.round(encontrado.kcal * fator),
+    prot: Math.round(encontrado.prot * fator * 10) / 10,
+    lip: Math.round(encontrado.lip * fator * 10) / 10,
+    carb: Math.round(encontrado.carb * fator * 10) / 10,
     fibra: Math.round(encontrado.fibra * fator * 10) / 10,
   };
 }
@@ -709,7 +709,7 @@ function LoadingEtapas({ etapa }) {
 
 function ConfBadge({ v, alt }) {
   const cor = v >= 90 ? "#0F6E56" : v >= 70 ? "#633806" : "#791F1F";
-  const bg  = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
+  const bg = v >= 90 ? "#EEF7F2" : v >= 70 ? "#FAEEDA" : "#FCEBEB";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
       <div style={{ background: bg, color: cor, borderRadius: 99, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>
@@ -724,17 +724,18 @@ export default function NutriScan({ paciente }) {
   const PACIENTE_ID = paciente?.id || "00000000-0000-0000-0000-000000000001";
   const meta = paciente?.meta_kcal || 1850;
 
-  const [imagem, setImagem]             = useState(null);
-  const [base64, setBase64]             = useState(null);
-  const [fotoFile, setFotoFile]         = useState(null);
-  const [status, setStatus]             = useState("idle");
+  const [imagem, setImagem] = useState(null);
+  const [base64, setBase64] = useState(null);
+  const [fotoFile, setFotoFile] = useState(null);
+  const [status, setStatus] = useState("idle");
   const [etapaLoading, setEtapaLoading] = useState(0);
-  const [resultado, setResultado]       = useState(null);
-  const [alimentos, setAlimentos]       = useState([]);
-  const [erro, setErro]                 = useState("");
-  const [enviado, setEnviado]           = useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [alimentos, setAlimentos] = useState([]);
+  const [erro, setErro] = useState("");
+  const [enviado, setEnviado] = useState(false);
   const [mostrarAviso, setMostrarAviso] = useState(true);
   const fileRef = useRef();
+  const galeriaRef = useRef();
   const timerRef = useRef();
 
   useEffect(() => {
@@ -816,13 +817,13 @@ export default function NutriScan({ paciente }) {
   };
 
   const totalConfirmado = alimentos.reduce((s, a) => s + (Number(a.calorias) || 0), 0);
-  const totalProt  = alimentos.reduce((s, a) => s + (a.macros?.prot  || 0), 0);
-  const totalCarb  = alimentos.reduce((s, a) => s + (a.macros?.carb  || 0), 0);
-  const totalLip   = alimentos.reduce((s, a) => s + (a.macros?.lip   || 0), 0);
+  const totalProt = alimentos.reduce((s, a) => s + (a.macros?.prot || 0), 0);
+  const totalCarb = alimentos.reduce((s, a) => s + (a.macros?.carb || 0), 0);
+  const totalLip = alimentos.reduce((s, a) => s + (a.macros?.lip || 0), 0);
   const totalFibra = alimentos.reduce((s, a) => s + (a.macros?.fibra || 0), 0);
   const pct = Math.min(100, Math.round((totalConfirmado / meta) * 100));
   const precisao = resultado?.precisao_geral || 0;
-  const emojis = ["🍚","🫘","🥦","🍗","🥕","🍳","🐟","🥗","🧀","🍞","🥩","🍅","🥑","🍌","🍊","🍎","🥭","🍇","🫐","🥝"];
+  const emojis = ["🍚", "🫘", "🥦", "🍗", "🥕", "🍳", "🐟", "🥗", "🧀", "🍞", "🥩", "🍅", "🥑", "🍌", "🍊", "🍎", "🥭", "🍇", "🫐", "🥝"];
 
   return (
     <div style={{ minHeight: "calc(100vh - 52px)", background: "#F7F5F0", fontFamily: "system-ui, sans-serif" }}>
@@ -895,9 +896,15 @@ export default function NutriScan({ paciente }) {
               </div>
             )}
             {!imagem && (
-              <button onClick={() => fileRef.current.click()} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                📷 Fotografar meu prato
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => fileRef.current.click()} style={{ flex: 1, background: "#1E5C3A", color: "white", border: "none", borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                  📷 Câmera
+                </button>
+                <button onClick={() => galeriaRef.current.click()} style={{ flex: 1, background: "white", color: "#1E5C3A", border: "2px solid #1E5C3A", borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                  🖼️ Galeria
+                </button>
+                <input ref={galeriaRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleArquivo(e.target.files[0])} />
+              </div>
             )}
           </>
         )}
