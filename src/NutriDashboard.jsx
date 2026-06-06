@@ -340,7 +340,17 @@ export default function NutriDashboard({ pacienteLogado }) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <input value={nota[r.id] || ""} onChange={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))} placeholder="Escreva uma observação..."
                     style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }} />
-                  <button onClick={() => setNotaEnviada(prev => ({ ...prev, [r.id]: true }))} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                  <button onClick={async () => {
+                    const texto = nota[r.id]?.trim();
+                    if (!texto) return;
+                    await supabase.from("comentarios").insert({
+                      refeicao_id: r.id,
+                      paciente_id: selecionado.id,
+                      texto,
+                      nutricionista: "Nutricionista",
+                    });
+                    setNotaEnviada(prev => ({ ...prev, [r.id]: true }));
+                  }} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
                     Enviar
                   </button>
                 </div>
