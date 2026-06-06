@@ -338,8 +338,13 @@ export default function NutriDashboard({ pacienteLogado }) {
                 </div>
               ) : (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input value={nota[r.id] || ""} onChange={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))} placeholder="Escreva uma observação..."
-                    style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }} />
+                  <input
+                    key={r.id}
+                    defaultValue={nota[r.id] || ""}
+                    onBlur={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))}
+                    placeholder="Escreva uma observação..."
+                    style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }}
+                  />
                   <button onClick={async () => {
                     const texto = nota[r.id]?.trim();
                     if (!texto) return;
