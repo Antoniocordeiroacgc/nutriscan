@@ -679,7 +679,7 @@ async function salvarRefeicao(pacienteId, fotoFile, analise) {
   if (refErr) throw refErr;
   if (analise.alimentos?.length > 0) {
     await supabase.from("alimentos").insert(
-      analise.alimentos.map(a => ({ refeicao_id: ref.id, nome: a.nome, peso_g: a.peso_estimado_g, calorias: a.calorias, porcao: a.porcao }))
+      analise.alimentos.map(a => ({ refeicao_id: ref.id, nome: a.nome, peso_g: a.peso_estimado_g, calorias: a.calorias, porcao: a.porcao, prot: a.macros?.prot || null, carb: a.macros?.carb || null, lip: a.macros?.lip || null, fibra: a.macros?.fibra || null }))
     );
   }
   return ref;
