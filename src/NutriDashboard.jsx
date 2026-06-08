@@ -5,10 +5,10 @@ function totalKcal(refs) { return refs.reduce((s, r) => s + (r.total_kcal || 0),
 
 function statusPaciente(total, meta) {
   const pct = total / meta;
-  if (total === 0) return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
-  if (pct < 0.5) return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
-  if (pct > 1.1) return { label: "Acima do limite", bg: "#FAEEDA", color: "#633806" };
-  return { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
+  if (total === 0)  return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
+  if (pct < 0.5)   return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
+  if (pct > 1.1)   return { label: "Acima do limite",  bg: "#FAEEDA", color: "#633806" };
+  return             { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
 }
 
 function hora(iso) {
@@ -16,8 +16,8 @@ function hora(iso) {
   return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-const CORES = ["#4CAF82", "#378ADD", "#D4537E", "#EF9F27", "#7F77DD", "#E24B4A"];
-const BGS = ["#EEF7F2", "#E6F1FB", "#FBEAF0", "#FAEEDA", "#EEEDFE", "#FCEBEB"];
+const CORES = ["#4CAF82","#378ADD","#D4537E","#EF9F27","#7F77DD","#E24B4A"];
+const BGS   = ["#EEF7F2","#E6F1FB","#FBEAF0","#FAEEDA","#EEEDFE","#FCEBEB"];
 
 function Avatar({ nome, size = 40, idx = 0 }) {
   const initials = nome?.split(" ").map(n => n[0]).slice(0, 2).join("") || "?";
@@ -33,10 +33,10 @@ function TabelaNutrientes({ alimentos }) {
   if (!alimentos || alimentos.length === 0) return null;
 
   const totais = alimentos.reduce((acc, a) => ({
-    kcal: acc.kcal + (a.calorias || 0),
-    prot: acc.prot + (a.prot || 0),
-    carb: acc.carb + (a.carb || 0),
-    lip: acc.lip + (a.lip || 0),
+    kcal:  acc.kcal  + (a.calorias || 0),
+    prot:  acc.prot  + (a.prot  || 0),
+    carb:  acc.carb  + (a.carb  || 0),
+    lip:   acc.lip   + (a.lip   || 0),
     fibra: acc.fibra + (a.fibra || 0),
   }), { kcal: 0, prot: 0, carb: 0, lip: 0, fibra: 0 });
 
@@ -84,17 +84,17 @@ function TabelaNutrientes({ alimentos }) {
 }
 
 export default function NutriDashboard({ pacienteLogado }) {
-  const [pacientes, setPacientes] = useState([]);
-  const [refeicoes, setRefeicoes] = useState({});
+  const [pacientes, setPacientes]     = useState([]);
+  const [refeicoes, setRefeicoes]     = useState({});
   const [selecionado, setSelecionado] = useState(null);
-  const [selIdx, setSelIdx] = useState(0);
-  const [busca, setBusca] = useState("");
-  const [carregando, setCarregando] = useState(true);
-  const [nota, setNota] = useState({});
+  const [selIdx, setSelIdx]           = useState(0);
+  const [busca, setBusca]             = useState("");
+  const [carregando, setCarregando]   = useState(true);
+  const [nota, setNota]               = useState({});
   const [notaEnviada, setNotaEnviada] = useState({});
-  const [fotoModal, setFotoModal] = useState(null);
-  const [view, setView] = useState("lista");
-  const [expandido, setExpandido] = useState({});
+  const [fotoModal, setFotoModal]     = useState(null);
+  const [view, setView]               = useState("lista");
+  const [expandido, setExpandido]     = useState({});
 
   useEffect(() => { carregar(); }, []);
 
@@ -117,7 +117,7 @@ export default function NutriDashboard({ pacienteLogado }) {
     seteDias.setDate(seteDias.getDate() - 7);
     const { data } = await supabase
       .from("refeicoes")
-      .select("*, alimentos(*)")
+      .select("*, alimentos(*), comentarios(*)")
       .eq("paciente_id", pacienteId)
       .gte("registrado_em", seteDias.toISOString())
       .order("registrado_em", { ascending: false });
@@ -137,18 +137,18 @@ export default function NutriDashboard({ pacienteLogado }) {
     p.email?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const refs = selecionado ? (refeicoes[selecionado.id] || []) : [];
-  const total = totalKcal(refs);
-  const meta = selecionado?.meta_kcal || 1800;
-  const pct = Math.min(100, Math.round((total / meta) * 100));
-  const st = selecionado ? statusPaciente(total, meta) : null;
+  const refs      = selecionado ? (refeicoes[selecionado.id] || []) : [];
+  const total     = totalKcal(refs);
+  const meta      = selecionado?.meta_kcal || 1800;
+  const pct       = Math.min(100, Math.round((total / meta) * 100));
+  const st        = selecionado ? statusPaciente(total, meta) : null;
   const progColor = pct > 110 ? "#E24B4A" : pct < 50 ? "#EF9F27" : "#1E5C3A";
-  const isMobile = window.innerWidth < 768;
+  const isMobile  = window.innerWidth < 768;
 
   // Totais gerais do dia
-  const totalProt = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.prot || 0), 0), 0);
-  const totalCarb = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.carb || 0), 0), 0);
-  const totalLip = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.lip || 0), 0), 0);
+  const totalProt  = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.prot  || 0), 0), 0);
+  const totalCarb  = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.carb  || 0), 0), 0);
+  const totalLip   = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.lip   || 0), 0), 0);
   const totalFibra = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.fibra || 0), 0), 0);
 
   const Sidebar = () => (
@@ -162,9 +162,9 @@ export default function NutriDashboard({ pacienteLogado }) {
         {carregando ? (
           <div style={{ textAlign: "center", padding: 24, color: "#aaa", fontSize: 13 }}>Carregando...</div>
         ) : filtrados.map((p, i) => {
-          const r = refeicoes[p.id] || [];
+          const r   = refeicoes[p.id] || [];
           const tot = totalKcal(r);
-          const s = statusPaciente(tot, p.meta_kcal || 1800);
+          const s   = statusPaciente(tot, p.meta_kcal || 1800);
           const ativo = selecionado?.id === p.id;
           return (
             <div key={p.id} onClick={() => selecionarPaciente(p, i)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", cursor: "pointer", borderBottom: "1px solid #F7F5F0", background: ativo ? "#EEF7F2" : "white", borderLeft: `3px solid ${ativo ? "#1E5C3A" : "transparent"}` }}>
@@ -207,9 +207,9 @@ export default function NutriDashboard({ pacienteLogado }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
           {[
             { label: "Calorias", val: total + " kcal", color: "#1E5C3A" },
-            { label: "Meta", val: meta + " kcal", color: "#378ADD" },
-            { label: "Saldo", val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
-            { label: "Adesão", val: pct + "%", color: progColor },
+            { label: "Meta",     val: meta + " kcal",  color: "#378ADD" },
+            { label: "Saldo",    val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
+            { label: "Adesão",   val: pct + "%", color: progColor },
           ].map((m, i) => (
             <div key={i} style={{ background: "white", borderRadius: 12, padding: "10px 12px", border: "1px solid #F0EFE8" }}>
               <div style={{ fontSize: 11, color: "#aaa", marginBottom: 3 }}>{m.label}</div>
@@ -236,31 +236,18 @@ export default function NutriDashboard({ pacienteLogado }) {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
               {[
-                { icon: "💪", label: "Proteínas", val: Math.round(totalProt * 10) / 10, meta: selecionado?.meta_proteina, color: "#378ADD", bg: "#E6F1FB" },
-                { icon: "🍞", label: "Carboidratos", val: Math.round(totalCarb * 10) / 10, meta: selecionado?.meta_carb, color: "#EF9F27", bg: "#FAEEDA" },
-                { icon: "🥑", label: "Gorduras", val: Math.round(totalLip * 10) / 10, meta: selecionado?.meta_gordura, color: "#E24B4A", bg: "#FCEBEB" },
-                { icon: "🌾", label: "Fibras", val: Math.round(totalFibra * 10) / 10, meta: selecionado?.meta_fibra, color: "#4CAF82", bg: "#EEF7F2" },
+                { icon: "💪", label: "Proteínas", val: Math.round(totalProt * 10) / 10, unit: "g", color: "#378ADD", bg: "#E6F1FB" },
+                { icon: "🍞", label: "Carboidratos", val: Math.round(totalCarb * 10) / 10, unit: "g", color: "#EF9F27", bg: "#FAEEDA" },
+                { icon: "🥑", label: "Gorduras", val: Math.round(totalLip * 10) / 10, unit: "g", color: "#E24B4A", bg: "#FCEBEB" },
+                { icon: "🌾", label: "Fibras", val: Math.round(totalFibra * 10) / 10, unit: "g", color: "#4CAF82", bg: "#EEF7F2" },
               ].map((m, i) => (
                 <div key={i} style={{ background: m.bg, borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
                   <div style={{ fontSize: 18, marginBottom: 4 }}>{m.icon}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: m.color }}>{m.val || "—"}{m.val ? "g" : ""}</div>
-                  {m.meta && (
-                    <div style={{ fontSize: 10, color: m.color, opacity: 0.7, marginTop: 2 }}>meta: {m.meta}g</div>
-                  )}
+                  <div style={{ fontSize: 16, fontWeight: 800, color: m.color }}>{m.val || "—"}{m.val ? m.unit : ""}</div>
                   <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>{m.label}</div>
-                  {m.meta && m.val > 0 && (
-                    <div style={{ background: "rgba(255,255,255,0.6)", borderRadius: 99, height: 3, marginTop: 4, overflow: "hidden" }}>
-                      <div style={{ width: `${Math.min(100, Math.round(m.val / m.meta * 100))}%`, background: m.color, height: "100%", borderRadius: 99 }} />
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
-            {selecionado?.peso_kg && (
-              <div style={{ marginTop: 10, fontSize: 11, color: "#aaa", textAlign: "center" }}>
-                ⚖️ Peso: {selecionado.peso_kg}kg · 💧 Água: {selecionado.meta_agua}ml/dia
-              </div>
-            )}
           </div>
         )}
 
@@ -338,24 +325,9 @@ export default function NutriDashboard({ pacienteLogado }) {
                 </div>
               ) : (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    key={r.id}
-                    defaultValue={nota[r.id] || ""}
-                    onBlur={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))}
-                    placeholder="Escreva uma observação..."
-                    style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }}
-                  />
-                  <button onClick={async () => {
-                    const texto = nota[r.id]?.trim();
-                    if (!texto) return;
-                    await supabase.from("comentarios").insert({
-                      refeicao_id: r.id,
-                      paciente_id: selecionado.id,
-                      texto,
-                      nutricionista: "Nutricionista",
-                    });
-                    setNotaEnviada(prev => ({ ...prev, [r.id]: true }));
-                  }} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                  <input value={nota[r.id] || ""} onChange={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))} placeholder="Escreva uma observação..."
+                    style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }} />
+                  <button onClick={() => setNotaEnviada(prev => ({ ...prev, [r.id]: true }))} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
                     Enviar
                   </button>
                 </div>
