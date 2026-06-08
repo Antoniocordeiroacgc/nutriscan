@@ -684,7 +684,15 @@ async function salvarRefeicao(pacienteId, fotoFile, analise) {
   }
   return ref;
 }
-
+async function buscarComentarios(pacienteId) {
+  const { data } = await supabase
+    .from("comentarios")
+    .select("*, refeicoes(nome, registrado_em)")
+    .eq("paciente_id", pacienteId)
+    .order("criado_em", { ascending: false })
+    .limit(10);
+  return data || [];
+}
 function LoadingEtapas({ etapa }) {
   const etapas = [
     { icon: "📤", texto: "Enviando foto para análise..." },
@@ -737,11 +745,17 @@ export default function NutriScan({ paciente }) {
   const fileRef = useRef();
   const galeriaRef = useRef();
   const timerRef = useRef();
-
+  const [comentarios, setComentarios] = useState([]);
   useEffect(() => {
     const timer = setTimeout(() => setMostrarAviso(false), 4000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (paciente?.id) {
+      buscarComentarios(paciente.id).then(setComentarios);
+    }
+  }, [paciente]);
 
   const iniciarLoading = () => {
     setEtapaLoading(0);

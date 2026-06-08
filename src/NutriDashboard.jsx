@@ -5,10 +5,10 @@ function totalKcal(refs) { return refs.reduce((s, r) => s + (r.total_kcal || 0),
 
 function statusPaciente(total, meta) {
   const pct = total / meta;
-  if (total === 0)  return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
-  if (pct < 0.5)   return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
-  if (pct > 1.1)   return { label: "Acima do limite",  bg: "#FAEEDA", color: "#633806" };
-  return             { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
+  if (total === 0) return { label: "Sem registro", bg: "#F0EFE8", color: "#888" };
+  if (pct < 0.5) return { label: "Abaixo do mínimo", bg: "#FCEBEB", color: "#791F1F" };
+  if (pct > 1.1) return { label: "Acima do limite", bg: "#FAEEDA", color: "#633806" };
+  return { label: "Na meta", bg: "#EEF7F2", color: "#0F6E56" };
 }
 
 function hora(iso) {
@@ -16,8 +16,8 @@ function hora(iso) {
   return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
-const CORES = ["#4CAF82","#378ADD","#D4537E","#EF9F27","#7F77DD","#E24B4A"];
-const BGS   = ["#EEF7F2","#E6F1FB","#FBEAF0","#FAEEDA","#EEEDFE","#FCEBEB"];
+const CORES = ["#4CAF82", "#378ADD", "#D4537E", "#EF9F27", "#7F77DD", "#E24B4A"];
+const BGS = ["#EEF7F2", "#E6F1FB", "#FBEAF0", "#FAEEDA", "#EEEDFE", "#FCEBEB"];
 
 function Avatar({ nome, size = 40, idx = 0 }) {
   const initials = nome?.split(" ").map(n => n[0]).slice(0, 2).join("") || "?";
@@ -33,10 +33,10 @@ function TabelaNutrientes({ alimentos }) {
   if (!alimentos || alimentos.length === 0) return null;
 
   const totais = alimentos.reduce((acc, a) => ({
-    kcal:  acc.kcal  + (a.calorias || 0),
-    prot:  acc.prot  + (a.prot  || 0),
-    carb:  acc.carb  + (a.carb  || 0),
-    lip:   acc.lip   + (a.lip   || 0),
+    kcal: acc.kcal + (a.calorias || 0),
+    prot: acc.prot + (a.prot || 0),
+    carb: acc.carb + (a.carb || 0),
+    lip: acc.lip + (a.lip || 0),
     fibra: acc.fibra + (a.fibra || 0),
   }), { kcal: 0, prot: 0, carb: 0, lip: 0, fibra: 0 });
 
@@ -84,17 +84,17 @@ function TabelaNutrientes({ alimentos }) {
 }
 
 export default function NutriDashboard({ pacienteLogado }) {
-  const [pacientes, setPacientes]     = useState([]);
-  const [refeicoes, setRefeicoes]     = useState({});
+  const [pacientes, setPacientes] = useState([]);
+  const [refeicoes, setRefeicoes] = useState({});
   const [selecionado, setSelecionado] = useState(null);
-  const [selIdx, setSelIdx]           = useState(0);
-  const [busca, setBusca]             = useState("");
-  const [carregando, setCarregando]   = useState(true);
-  const [nota, setNota]               = useState({});
+  const [selIdx, setSelIdx] = useState(0);
+  const [busca, setBusca] = useState("");
+  const [carregando, setCarregando] = useState(true);
+  const [nota, setNota] = useState({});
   const [notaEnviada, setNotaEnviada] = useState({});
-  const [fotoModal, setFotoModal]     = useState(null);
-  const [view, setView]               = useState("lista");
-  const [expandido, setExpandido]     = useState({});
+  const [fotoModal, setFotoModal] = useState(null);
+  const [view, setView] = useState("lista");
+  const [expandido, setExpandido] = useState({});
 
   useEffect(() => { carregar(); }, []);
 
@@ -137,18 +137,18 @@ export default function NutriDashboard({ pacienteLogado }) {
     p.email?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const refs      = selecionado ? (refeicoes[selecionado.id] || []) : [];
-  const total     = totalKcal(refs);
-  const meta      = selecionado?.meta_kcal || 1800;
-  const pct       = Math.min(100, Math.round((total / meta) * 100));
-  const st        = selecionado ? statusPaciente(total, meta) : null;
+  const refs = selecionado ? (refeicoes[selecionado.id] || []) : [];
+  const total = totalKcal(refs);
+  const meta = selecionado?.meta_kcal || 1800;
+  const pct = Math.min(100, Math.round((total / meta) * 100));
+  const st = selecionado ? statusPaciente(total, meta) : null;
   const progColor = pct > 110 ? "#E24B4A" : pct < 50 ? "#EF9F27" : "#1E5C3A";
-  const isMobile  = window.innerWidth < 768;
+  const isMobile = window.innerWidth < 768;
 
   // Totais gerais do dia
-  const totalProt  = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.prot  || 0), 0), 0);
-  const totalCarb  = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.carb  || 0), 0), 0);
-  const totalLip   = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.lip   || 0), 0), 0);
+  const totalProt = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.prot || 0), 0), 0);
+  const totalCarb = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.carb || 0), 0), 0);
+  const totalLip = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.lip || 0), 0), 0);
   const totalFibra = refs.reduce((s, r) => s + (r.alimentos || []).reduce((a, al) => a + (al.fibra || 0), 0), 0);
 
   const Sidebar = () => (
@@ -162,9 +162,9 @@ export default function NutriDashboard({ pacienteLogado }) {
         {carregando ? (
           <div style={{ textAlign: "center", padding: 24, color: "#aaa", fontSize: 13 }}>Carregando...</div>
         ) : filtrados.map((p, i) => {
-          const r   = refeicoes[p.id] || [];
+          const r = refeicoes[p.id] || [];
           const tot = totalKcal(r);
-          const s   = statusPaciente(tot, p.meta_kcal || 1800);
+          const s = statusPaciente(tot, p.meta_kcal || 1800);
           const ativo = selecionado?.id === p.id;
           return (
             <div key={p.id} onClick={() => selecionarPaciente(p, i)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", cursor: "pointer", borderBottom: "1px solid #F7F5F0", background: ativo ? "#EEF7F2" : "white", borderLeft: `3px solid ${ativo ? "#1E5C3A" : "transparent"}` }}>
@@ -207,9 +207,9 @@ export default function NutriDashboard({ pacienteLogado }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
           {[
             { label: "Calorias", val: total + " kcal", color: "#1E5C3A" },
-            { label: "Meta",     val: meta + " kcal",  color: "#378ADD" },
-            { label: "Saldo",    val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
-            { label: "Adesão",   val: pct + "%", color: progColor },
+            { label: "Meta", val: meta + " kcal", color: "#378ADD" },
+            { label: "Saldo", val: Math.abs(meta - total) + (total > meta ? " acima" : " rest."), color: total > meta ? "#E24B4A" : "#EF9F27" },
+            { label: "Adesão", val: pct + "%", color: progColor },
           ].map((m, i) => (
             <div key={i} style={{ background: "white", borderRadius: 12, padding: "10px 12px", border: "1px solid #F0EFE8" }}>
               <div style={{ fontSize: 11, color: "#aaa", marginBottom: 3 }}>{m.label}</div>
@@ -318,60 +318,68 @@ export default function NutriDashboard({ pacienteLogado }) {
             )}
 
             {/* Observação */}
+            {/* Observação */}
             <div style={{ padding: "8px 14px 12px", borderTop: "1px solid #F7F5F0" }}>
+              {r.comentarios?.length > 0 && (
+                <div style={{ marginBottom: 10 }}>
+                  {r.comentarios.map((c, ci) => (
+                    <div key={ci} style={{ background: "#EEF7F2", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#1E5C3A", marginBottom: 6, lineHeight: 1.5 }}>
+                      <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 3 }}>👩‍⚕️ Nutricionista</div>
+                      <div>{c.texto}</div>
+                      <div style={{ fontSize: 10, color: "#aaa", marginTop: 4 }}>{new Date(c.criado_em).toLocaleString("pt-BR")}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {notaEnviada[r.id] ? (
                 <div style={{ background: "#EEF7F2", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "#1E5C3A", fontWeight: 500 }}>
                   ✅ Observação enviada!
                 </div>
               ) : (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input value={nota[r.id] || ""} onChange={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))} placeholder="Escreva uma observação..."
+                  <input key={r.id} defaultValue={nota[r.id] || ""} onBlur={e => setNota(prev => ({ ...prev, [r.id]: e.target.value }))} placeholder="Escreva uma observação..."
                     style={{ flex: 1, border: "1px solid #E8E8E0", borderRadius: 10, padding: "8px 10px", fontSize: 12, outline: "none", background: "#F7F5F0" }} />
-                  <button onClick={() => setNotaEnviada(prev => ({ ...prev, [r.id]: true }))} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+                  <button onClick={async () => {
+                    const texto = nota[r.id]?.trim();
+                    if (!texto) return;
+                    await supabase.from("comentarios").insert({ refeicao_id: r.id, paciente_id: selecionado.id, texto, nutricionista: "Nutricionista" });
+                    setNotaEnviada(prev => ({ ...prev, [r.id]: true }));
+                    setRefeicoes(prev => ({ ...prev, [selecionado.id]: (prev[selecionado.id] || []).map(rf => rf.id === r.id ? { ...rf, comentarios: [...(rf.comentarios || []), { texto, criado_em: new Date().toISOString() }] } : rf) }));
+                  }} style={{ background: "#1E5C3A", color: "white", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
                     Enviar
                   </button>
                 </div>
               )}
             </div>
+            {/* Modal foto */}
+            {fotoModal && (
+              <div onClick={() => setFotoModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, cursor: "pointer" }}>
+                <img src={fotoModal} alt="prato" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
+                <div style={{ position: "absolute", top: 16, right: 20, color: "white", fontSize: 28, fontWeight: 700 }}>✕</div>
+              </div>
+            )}
+
+            {/* MOBILE */}
+            {isMobile && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)", overflow: "hidden" }}>
+                {view === "lista" ? <Sidebar /> : <Detalhe />}
+              </div>
+            )}
+
+            {/* DESKTOP */}
+            {!isMobile && (
+              <div style={{ display: "flex", height: "calc(100vh - 52px)", overflow: "hidden" }}>
+                <div style={{ width: 280, flexShrink: 0, height: "100%", overflow: "hidden" }}>
+                  <Sidebar />
+                </div>
+                {selecionado ? <Detalhe /> : (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 32, opacity: 0.3 }}>👈</div>
+                    <div>Selecione um paciente</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        ))}
-        <div style={{ height: 20 }} />
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ fontFamily: "system-ui, sans-serif", background: "#F7F5F0" }}>
-
-      {/* Modal foto */}
-      {fotoModal && (
-        <div onClick={() => setFotoModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, cursor: "pointer" }}>
-          <img src={fotoModal} alt="prato" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
-          <div style={{ position: "absolute", top: 16, right: 20, color: "white", fontSize: 28, fontWeight: 700 }}>✕</div>
-        </div>
-      )}
-
-      {/* MOBILE */}
-      {isMobile && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "calc(100vh - 52px)", overflow: "hidden" }}>
-          {view === "lista" ? <Sidebar /> : <Detalhe />}
-        </div>
-      )}
-
-      {/* DESKTOP */}
-      {!isMobile && (
-        <div style={{ display: "flex", height: "calc(100vh - 52px)", overflow: "hidden" }}>
-          <div style={{ width: 280, flexShrink: 0, height: "100%", overflow: "hidden" }}>
-            <Sidebar />
-          </div>
-          {selecionado ? <Detalhe /> : (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", flexDirection: "column", gap: 8 }}>
-              <div style={{ fontSize: 32, opacity: 0.3 }}>👈</div>
-              <div>Selecione um paciente</div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+        );
 }
