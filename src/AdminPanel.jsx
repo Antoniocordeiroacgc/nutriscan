@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase";
 import Rodape from "./Rodape";
 
 const ADMIN_SENHA = "criaria2025";
+const VALOR_PLANO = 34.90;
 
 export default function AdminPanel({ onSair }) {
   const [autenticado, setAutenticado] = useState(false);
@@ -14,6 +15,9 @@ export default function AdminPanel({ onSair }) {
   const [refeicoes, setRefeicoes]     = useState({});
   const [carregando, setCarregando]   = useState(false);
   const [busca, setBusca]             = useState("");
+  const [editandoPgto, setEditandoPgto] = useState(null);
+  const [formaSel, setFormaSel]       = useState("pix");
+  const [valorSel, setValorSel]       = useState(VALOR_PLANO);
 
   const entrar = () => {
     if (senha === ADMIN_SENHA) { setAutenticado(true); carregar(); }
@@ -51,9 +55,27 @@ export default function AdminPanel({ onSair }) {
     setPacientes(prev => prev.filter(p => p.id !== id));
   };
 
-  const togglePagamento = async (id, pago) => {
-    await supabase.from("pacientes").update({ pago: !pago }).eq("id", id);
-    setPacientes(prev => prev.map(p => p.id === id ? { ...p, pago: !pago } : p));
+  const abrirEdicaoPagamento = (p) => {
+    setEditandoPgto(p.id);
+    setFormaSel(p.forma_pagamento || "pix");
+    setValorSel(p.valor_pago || VALOR_PLANO);
+  };
+
+  const confirmarPagamento = async (id) => {
+    const agora = new Date().toISOString();
+    await supabase.from("pacientes").update({
+      pago: true,
+      forma_pagamento: formaSel,
+      valor_pago: valorSel,
+      data_pagamento: agora,
+    }).eq("id", id);
+    setPacientes(prev => prev.map(p => p.id === id ? { ...p, pago: true, forma_pagamento: formaSel, valor_pago: valorSel, data_pagamento: agora } : p));
+    setEditandoPgto(null);
+  };
+
+  const marcarNaoPago = async (id) => {
+    await supabase.from("pacientes").update({ pago: false }).eq("id", id);
+    setPacientes(prev => prev.map(p => p.id === id ? { ...p, pago: false } : p));
   };
 
   const diasRestantes = (trialFim) => {
@@ -65,6 +87,18 @@ export default function AdminPanel({ onSair }) {
   const formatarData = (data) => {
     if (!data) return "—";
     return new Date(data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
+  const formatarMoeda = (val) => {
+    if (!val) return "—";
+    return `R$ ${Number(val).toFixed(2).replace(".", ",")}`;
+  };
+
+  const iconeForma = (forma) => {
+    if (forma === "pix") return "💠 Pix";
+    if (forma === "cartao") return "💳 Cartão";
+    if (forma === "boleto") return "🧾 Boleto";
+    return "—";
   };
 
   const pacientesFiltrados = pacientes.filter(p =>
@@ -81,6 +115,9 @@ export default function AdminPanel({ onSair }) {
   const ativos          = pacientes.filter(p => diasRestantes(p.trial_fim) > 0).length;
   const naoRespondidos  = contatos.filter(c => !c.respondido).length;
   const inadimplentes   = pacientes.filter(p => !p.pago && diasRestantes(p.trial_fim) === 0).length;
+  const totalRecebido   = pacientes.reduce((s, p) => s + (p.pago ? Number(p.valor_pago || 0) : 0), 0);
+  const totalPendente   = inadimplentes * VALOR_PLANO;
+  const pagantes        = pacientes.filter(p => p.pago).length;
 
   if (!autenticado) {
     return (
@@ -117,13 +154,32 @@ export default function AdminPanel({ onSair }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: "16px 20px", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+      <div style={{ flex: 1, padding: "16px 20px", maxWidth: 1150, margin: "0 auto", width: "100%" }}>
+
+        {/* Cards financeiros */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 12 }}>
+          <div style={{ background: "#1E5C3A", borderRadius: 14, padding: "14px 16px", color: "white" }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>💰 Total recebido</div>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{formatarMoeda(totalRecebido)}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{pagantes} pagante{pagantes !== 1 ? "s" : ""}</div>
+          </div>
+          <div style={{ background: "white", borderRadius: 14, padding: "14px 16px", border: "1px solid #FFD0D0" }}>
+            <div style={{ fontSize: 11, color: "#aaa", marginBottom: 4 }}>⏳ Pendente de cobrança</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#E24B4A" }}>{formatarMoeda(totalPendente)}</div>
+            <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{inadimplentes} inadimplente{inadimplentes !== 1 ? "s" : ""}</div>
+          </div>
+          <div style={{ background: "white", borderRadius: 14, padding: "14px 16px", border: "1px solid #F0EFE8" }}>
+            <div style={{ fontSize: 11, color: "#aaa", marginBottom: 4 }}>📋 Plano atual</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#1E5C3A" }}>{formatarMoeda(VALOR_PLANO)}</div>
+            <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>por ano</div>
+          </div>
+        </div>
 
         {/* Métricas */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10, marginBottom: 16 }}>
           {[
             { label: "Total cadastrados", val: pacientes.length, icon: "👥", color: "#1E5C3A" },
-            { label: "Usuários ativos",   val: ativos,           icon: "✅", color: "#378ADD" },
+            { label: "Em teste grátis",   val: ativos - pagantes < 0 ? 0 : ativos - pagantes, icon: "🎁", color: "#378ADD" },
             { label: "Refeições",         val: totalRefeicoes,   icon: "🍽️", color: "#EF9F27" },
             { label: "Inadimplentes",     val: inadimplentes,    icon: "💰", color: inadimplentes > 0 ? "#E24B4A" : "#888" },
             { label: "Contatos novos",    val: naoRespondidos,   icon: "💬", color: naoRespondidos > 0 ? "#E24B4A" : "#888" },
@@ -154,50 +210,69 @@ export default function AdminPanel({ onSair }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead>
                 <tr style={{ background: "#F7F5F0" }}>
-                  {["Nome", "E-mail", "Objetivo", "Cadastro", "Refeições", "Dias", "Mensalidade", "Status", ""].map((h, i) => (
-                    <th key={i} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
+                  {["Nome", "E-mail", "Cadastro", "Refeições", "Dias", "Forma", "Valor", "Data pgto", "Status", ""].map((h, i) => (
+                    <th key={i} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {carregando ? (
-                  <tr><td colSpan={9} style={{ textAlign: "center", padding: 32, color: "#aaa" }}>Carregando...</td></tr>
+                  <tr><td colSpan={10} style={{ textAlign: "center", padding: 32, color: "#aaa" }}>Carregando...</td></tr>
                 ) : pacientesFiltrados.length === 0 ? (
-                  <tr><td colSpan={9} style={{ textAlign: "center", padding: 32, color: "#aaa" }}>Nenhum paciente encontrado</td></tr>
+                  <tr><td colSpan={10} style={{ textAlign: "center", padding: 32, color: "#aaa" }}>Nenhum paciente encontrado</td></tr>
                 ) : pacientesFiltrados.map((p, i) => {
                   const dias = diasRestantes(p.trial_fim);
                   const refs = refeicoes[p.id] || 0;
                   const ativo = dias > 0;
                   const pago = p.pago || false;
                   const expirado = !ativo;
+                  const editando = editandoPgto === p.id;
                   return (
                     <tr key={p.id} style={{ borderBottom: "1px solid #F7F5F0", background: i % 2 === 0 ? "white" : "#FAFAF8" }}>
-                      <td style={{ padding: "11px 14px", fontWeight: 600, color: "#1a1a1a", whiteSpace: "nowrap" }}>{p.nome}</td>
-                      <td style={{ padding: "11px 14px", color: "#666" }}>{p.email}</td>
-                      <td style={{ padding: "11px 14px", color: "#555", whiteSpace: "nowrap" }}>{p.objetivo || "Saúde geral"}</td>
-                      <td style={{ padding: "11px 14px", color: "#888", whiteSpace: "nowrap" }}>{formatarData(p.criado_em)}</td>
-                      <td style={{ padding: "11px 14px", fontWeight: 700, color: refs > 0 ? "#1E5C3A" : "#ccc" }}>{refs}</td>
-                      <td style={{ padding: "11px 14px", fontWeight: 700, color: dias <= 5 ? "#E24B4A" : dias <= 10 ? "#EF9F27" : "#1E5C3A", whiteSpace: "nowrap" }}>
-                        {ativo ? `${dias}d` : "Expirado"}
+                      <td style={{ padding: "11px 12px", fontWeight: 600, color: "#1a1a1a", whiteSpace: "nowrap" }}>{p.nome}</td>
+                      <td style={{ padding: "11px 12px", color: "#666" }}>{p.email}</td>
+                      <td style={{ padding: "11px 12px", color: "#888", whiteSpace: "nowrap" }}>{formatarData(p.criado_em)}</td>
+                      <td style={{ padding: "11px 12px", fontWeight: 700, color: refs > 0 ? "#1E5C3A" : "#ccc" }}>{refs}</td>
+                      <td style={{ padding: "11px 12px", fontWeight: 700, color: dias <= 5 ? "#E24B4A" : dias <= 10 ? "#EF9F27" : "#1E5C3A", whiteSpace: "nowrap" }}>
+                        {ativo ? `${dias}d` : "Exp."}
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
-                        {expirado ? (
-                          <button
-                            onClick={() => togglePagamento(p.id, pago)}
-                            style={{ background: pago ? "#EEF7F2" : "#FCEBEB", color: pago ? "#0F6E56" : "#E24B4A", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
-                          >
-                            {pago ? "✓ Pago" : "✕ Não pago"}
-                          </button>
+
+                      {editando ? (
+                        <>
+                          <td style={{ padding: "8px 12px" }} colSpan={2}>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <select value={formaSel} onChange={e => setFormaSel(e.target.value)} style={{ border: "1px solid #E8E8E0", borderRadius: 6, padding: "4px 6px", fontSize: 11, outline: "none" }}>
+                                <option value="pix">💠 Pix</option>
+                                <option value="cartao">💳 Cartão</option>
+                                <option value="boleto">🧾 Boleto</option>
+                              </select>
+                              <input type="number" value={valorSel} onChange={e => setValorSel(e.target.value)} style={{ width: 60, border: "1px solid #E8E8E0", borderRadius: 6, padding: "4px 6px", fontSize: 11, outline: "none" }} />
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td style={{ padding: "11px 12px", whiteSpace: "nowrap" }}>{pago ? iconeForma(p.forma_pagamento) : "—"}</td>
+                          <td style={{ padding: "11px 12px", fontWeight: 700, color: pago ? "#1E5C3A" : "#ccc", whiteSpace: "nowrap" }}>{pago ? formatarMoeda(p.valor_pago) : "—"}</td>
+                        </>
+                      )}
+
+                      <td style={{ padding: "11px 12px", color: "#888", whiteSpace: "nowrap" }}>{pago ? formatarData(p.data_pagamento) : "—"}</td>
+
+                      <td style={{ padding: "11px 12px" }}>
+                        {editando ? (
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button onClick={() => confirmarPagamento(p.id)} style={{ background: "#EEF7F2", color: "#0F6E56", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer", fontWeight: 700 }}>✓ Salvar</button>
+                            <button onClick={() => setEditandoPgto(null)} style={{ background: "#F0EFE8", color: "#888", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}>✕</button>
+                          </div>
+                        ) : pago ? (
+                          <button onClick={() => marcarNaoPago(p.id)} style={{ background: "#EEF7F2", color: "#0F6E56", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Pago</button>
                         ) : (
-                          <span style={{ fontSize: 11, color: "#aaa" }}>Em teste</span>
+                          <button onClick={() => abrirEdicaoPagamento(p)} style={{ background: "#FCEBEB", color: "#E24B4A", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>+ Registrar</button>
                         )}
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <span style={{ background: ativo ? "#EEF7F2" : "#F0EFE8", color: ativo ? "#0F6E56" : "#888", borderRadius: 99, padding: "3px 10px", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
-                          {ativo ? "✓ Ativo" : "Expirado"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "11px 14px" }}>
+
+                      <td style={{ padding: "11px 12px" }}>
                         <button onClick={() => excluirPaciente(p.id, p.nome)} style={{ background: "#FCEBEB", color: "#E24B4A", border: "none", borderRadius: 6, padding: "3px 8px", fontSize: 11, cursor: "pointer", fontWeight: 700 }}>🗑️</button>
                       </td>
                     </tr>
