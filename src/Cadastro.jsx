@@ -105,11 +105,10 @@ export default function Cadastro({ onCadastrado }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      if (error) throw error;
       setEtapa("sucesso");
       setTimeout(() => onCadastrado(data), 2500);
     } catch (e) {
-      setErro(e.message?.includes("unique") ? "Este e-mail já está cadastrado." : e.message);
+      setErro(e.message);
     }
     setLoading(false);
   };
