@@ -4,8 +4,8 @@ import Rodape from "./Rodape";
 
 const OBJETIVOS = [
   { id: "emagrecimento", label: "⚖️ Emagrecimento", desc: "Perder gordura preservando músculo" },
-  { id: "ganho_massa",   label: "💪 Ganho de massa", desc: "Aumentar massa muscular" },
-  { id: "saude_geral",   label: "🌱 Saúde geral",    desc: "Manter saúde e equilíbrio" },
+  { id: "ganho_massa", label: "💪 Ganho de massa", desc: "Aumentar massa muscular" },
+  { id: "saude_geral", label: "🌱 Saúde geral", desc: "Manter saúde e equilíbrio" },
 ];
 
 function calcularMetas(peso, objetivo) {
@@ -14,37 +14,37 @@ function calcularMetas(peso, objetivo) {
 
   if (objetivo === "ganho_massa") {
     return {
-      calorias:     Math.round(p * 35),
-      proteinas:    Math.round(p * 1.6),
+      calorias: Math.round(p * 35),
+      proteinas: Math.round(p * 1.6),
       carboidratos: Math.round(p * 4),
-      gorduras:     Math.round(p * 0.7),
-      creatina:     Math.round(p * 0.07 * 10) / 10,
-      agua:         Math.round(p * 35),
-      fibras:       null,
+      gorduras: Math.round(p * 0.7),
+      creatina: Math.round(p * 0.07 * 10) / 10,
+      agua: Math.round(p * 35),
+      fibras: null,
     };
   }
 
   if (objetivo === "emagrecimento") {
     return {
-      calorias:     Math.round(p * 20),
-      proteinas:    Math.round(p * 2),
+      calorias: Math.round(p * 20),
+      proteinas: Math.round(p * 2),
       carboidratos: Math.round(p * 2),
-      gorduras:     Math.round(p * 0.8),
-      fibras:       Math.round(p * 0.5),
-      agua:         Math.round(p * 35),
-      creatina:     null,
+      gorduras: Math.round(p * 0.8),
+      fibras: Math.round(p * 0.5),
+      agua: Math.round(p * 35),
+      creatina: null,
     };
   }
 
   // Saúde geral — média entre os dois
   return {
-    calorias:     Math.round(p * 27),
-    proteinas:    Math.round(p * 1.8),
+    calorias: Math.round(p * 27),
+    proteinas: Math.round(p * 1.8),
     carboidratos: Math.round(p * 3),
-    gorduras:     Math.round(p * 0.75),
-    fibras:       Math.round(p * 0.4),
-    agua:         Math.round(p * 35),
-    creatina:     null,
+    gorduras: Math.round(p * 0.75),
+    fibras: Math.round(p * 0.4),
+    agua: Math.round(p * 35),
+    creatina: null,
   };
 }
 
@@ -61,23 +61,23 @@ function CardMeta({ icon, label, val, unit, color, bg }) {
 }
 
 export default function Cadastro({ onCadastrado }) {
-  const [etapa, setEtapa]       = useState("inicio");
-  const [nome, setNome]         = useState("");
-  const [email, setEmail]       = useState("");
-  const [senha, setSenha]       = useState("");
+  const [etapa, setEtapa] = useState("inicio");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [objetivo, setObjetivo] = useState("");
-  const [peso, setPeso]         = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [erro, setErro]         = useState("");
+  const [peso, setPeso] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
   // Fale conosco
-  const [cNome, setCNome]       = useState("");
-  const [cEmail, setCEmail]     = useState("");
+  const [cNome, setCNome] = useState("");
+  const [cEmail, setCEmail] = useState("");
   const [cCelular, setCCelular] = useState("");
   const [cMensagem, setCMensagem] = useState("");
   const [cLoading, setCLoading] = useState(false);
-  const [cErro, setCErro]       = useState("");
+  const [cErro, setCErro] = useState("");
 
   const metas = calcularMetas(peso, objetivo);
 
@@ -88,26 +88,23 @@ export default function Cadastro({ onCadastrado }) {
     setLoading(true); setErro("");
     try {
       const obj = OBJETIVOS.find(o => o.id === objetivo);
-      const trialFim = new Date();
-      trialFim.setDate(trialFim.getDate() + 30);
-      const { data, error } = await supabase
-        .from("pacientes")
-        .insert({
+      const response = await fetch("/api/cadastrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           nome, email, senha,
           objetivo: obj.label,
-          meta_kcal: metas?.calorias || 1850,
+          meta_kcal: metas?.calorias,
           meta_proteina: metas?.proteinas,
           meta_carb: metas?.carboidratos,
           meta_gordura: metas?.gorduras,
           meta_fibra: metas?.fibras,
           meta_agua: metas?.agua,
           peso_kg: Number(peso),
-          plano: "teste",
-          trial_inicio: new Date().toISOString(),
-          trial_fim: trialFim.toISOString(),
-          ativo: true,
-        })
-        .select().single();
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       if (error) throw error;
       setEtapa("sucesso");
       setTimeout(() => onCadastrado(data), 2500);
@@ -121,8 +118,13 @@ export default function Cadastro({ onCadastrado }) {
     if (!email || !senha) { setErro("Preencha e-mail e senha."); return; }
     setLoading(true); setErro("");
     try {
-      const { data } = await supabase.from("pacientes").select("*").eq("email", email).eq("senha", senha).maybeSingle();
-      if (!data) throw new Error("E-mail ou senha incorretos.");
+      const response = await fetch("/api/entrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       onCadastrado(data);
     } catch (e) { setErro(e.message); }
     setLoading(false);
@@ -165,7 +167,7 @@ export default function Cadastro({ onCadastrado }) {
             <div style={{ fontWeight: 800, fontSize: 20, color: "#1a1a1a", marginBottom: 6 }}>Bem-vindo ao NutriScan! 👋</div>
             <div style={{ fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.6 }}>Fotografe seus pratos e receba análise calórica por IA. Sua nutricionista acompanha tudo em tempo real.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-              {[["🤖","IA identifica alimentos automaticamente"],["📊","Calorias e macros pela Tabela TACO"],["👩‍⚕️","Nutricionista acompanha seu progresso"],["📱","Funciona no celular pela câmera"]].map(([icon, text], i) => (
+              {[["🤖", "IA identifica alimentos automaticamente"], ["📊", "Calorias e macros pela Tabela TACO"], ["👩‍⚕️", "Nutricionista acompanha seu progresso"], ["📱", "Funciona no celular pela câmera"]].map(([icon, text], i) => (
                 <div key={i} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <span style={{ fontSize: 18 }}>{icon}</span>
                   <span style={{ fontSize: 13, color: "#555" }}>{text}</span>
