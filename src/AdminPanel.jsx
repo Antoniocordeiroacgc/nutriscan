@@ -303,7 +303,7 @@ export default function AdminPanel({ onSair }) {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-                    <a href={`mailto:${c.email}`} style={{ background: "#1E5C3A", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>✉️ Responder</a>
+                    <a href={`https://mail.google.com/mail/?view=cm&to=${c.email}&su=NutriScan — Retorno ao seu contato`} target="_blank" rel="noopener noreferrer" style={{ background: "#1E5C3A", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>✉️ Responder</a>
                     {c.celular && (
                       <a href={`https://wa.me/55${c.celular.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>💬 WhatsApp</a>
                     )}
