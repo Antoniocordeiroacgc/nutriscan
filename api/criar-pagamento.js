@@ -21,43 +21,43 @@ export default async function handler(req, res) {
   const VALOR_PLANO = valor || 34.90;
 
   try {
-    if (forma === "pix") {
-      // ── PIX — Pagamento direto via API de Payments ──────────────
-      const response = await fetch("https://api.mercadopago.com/v1/payments", {
+    if (forma === "pix" || forma === "cartao") {
+      const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${ACCESS_TOKEN}`,
-          "X-Idempotency-Key": `${pacienteId}-${Date.now()}`, // evita cobrança duplicada
         },
         body: JSON.stringify({
-          transaction_amount: VALOR_PLANO,
-          description: "NutriScan — Plano Anual",
-          payment_method_id: "pix",
-          payer: {
-            email: email,
-            first_name: nome.split(" ")[0],
-            last_name: nome.split(" ").slice(1).join(" ") || nome.split(" ")[0],
-            identification: cpf ? { type: "CPF", number: cpf } : undefined,
+          items: [{
+            title: "NutriScan — Plano Anual",
+            quantity: 1,
+            unit_price: VALOR_PLANO,
+            currency_id: "BRL",
+          }],
+          payer: { email, name: nome },
+          external_reference: pacienteId,
+          notification_url: "https://nutriscan.ia.br/api/webhook-mercadopago",
+          back_urls: {
+            success: "https://nutriscan.ia.br?pagamento=sucesso",
+            failure: "https://nutriscan.ia.br?pagamento=erro",
+            pending: "https://nutriscan.ia.br?pagamento=pendente",
           },
-          external_reference: pacienteId, // usamos isso no webhook pra saber quem pagou
-          notification_url: "https://nutriscan-rho.vercel.app/api/webhook-mercadopago",
+          auto_return: "approved",
+          payment_methods: {
+            excluded_payment_types: forma === "cartao" ? [{ id: "ticket" }] : [],
+          },
         }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        return res.status(400).json({ error: data.message || "Erro ao criar cobrança Pix" });
+        return res.status(400).json({ error: data.message || "Erro ao criar checkout" });
       }
 
       return res.status(200).json({
-        paymentId: data.id,
-        status: data.status,
-        qrCode: {
-          encodedImage: data.point_of_interaction?.transaction_data?.qr_code_base64,
-          payload: data.point_of_interaction?.transaction_data?.qr_code,
-        },
+        preferenceId: data.id,
+        invoiceUrl: data.init_point,
       });
     }
 

@@ -4,12 +4,12 @@ import { supabase } from "./lib/supabase";
 const VALOR_PLANO = 34.90;
 
 export default function TelaPagamento({ pacienteId, nome, email, onConcluido, onVoltar }) {
-  const [forma, setForma]       = useState("pix");
-  const [cpf, setCpf]           = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [erro, setErro]         = useState("");
+  const [forma, setForma] = useState("pix");
+  const [cpf, setCpf] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
   const [cobranca, setCobranca] = useState(null);
-  const [copiado, setCopiado]   = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const pollingRef = useRef();
 
   // Verifica periodicamente se o pagamento foi confirmado (via webhook atualizando o banco)
@@ -45,11 +45,10 @@ export default function TelaPagamento({ pacienteId, nome, email, onConcluido, on
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Erro ao criar cobrança");
 
-      if (forma === "cartao" && data.invoiceUrl) {
-        window.location.href = data.invoiceUrl; // vai para o Checkout Pro seguro
+      if (data.invoiceUrl) {
+        window.location.href = data.invoiceUrl;
         return;
       }
-
       setCobranca(data);
     } catch (e) {
       setErro(e.message);
