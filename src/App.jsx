@@ -27,9 +27,13 @@ export default function App() {
   }, []);
 
   const onCadastrado = (p) => {
-    localStorage.setItem("nutriscan_paciente", JSON.stringify(p));
-    setPaciente(p);
-    setTela("paciente");
+  localStorage.setItem("nutriscan_paciente", JSON.stringify(p));
+  setPaciente(p);
+  if (!p.pago) {
+    setTela("cadastro");
+    return;
+  }
+  setTela("paciente");
     const jaViu = localStorage.getItem(`tutorial_${p.id}`);
     if (!jaViu) setMostrarTutorial(true);
   };

@@ -153,14 +153,7 @@ export default function Cadastro({ onCadastrado }) {
         <div style={{ fontSize: 11, color: "#aaa", letterSpacing: 1.5, textTransform: "uppercase" }}>CRIAR.IA TECNOLOGIA</div>
       </div>
 
-      {etapa !== "contato" && etapa !== "contato_ok" && (
-        <div style={{ background: "#1E5C3A", borderRadius: 14, padding: "12px 20px", marginBottom: 20, textAlign: "center", maxWidth: 400, width: "100%" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#7DFCA8", marginBottom: 2 }}>🎉 Período de testes — 30 dias grátis!</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Programa piloto do NutriScan. Sem cartão de crédito.</div>
-        </div>
-      )}
-
-      <div className="card" style={{ background: "white", borderRadius: 20, padding: 24, width: "100%", maxWidth: 400, border: "1px solid #F0EFE8" }}>
+            <div className="card" style={{ background: "white", borderRadius: 20, padding: 24, width: "100%", maxWidth: 400, border: "1px solid #F0EFE8" }}>
 
         {/* INÍCIO */}
         {etapa === "inicio" && (
@@ -175,7 +168,7 @@ export default function Cadastro({ onCadastrado }) {
                 </div>
               ))}
             </div>
-            <button onClick={() => setEtapa("dados")} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>Criar conta grátis →</button>
+            <button onClick={() => setEtapa("dados")} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>Criar conta  →</button>
             <button onClick={() => { setEtapa("login"); setErro(""); }} style={{ width: "100%", background: "transparent", color: "#666", border: "1px solid #E8E8E0", borderRadius: 12, padding: 12, fontSize: 13, cursor: "pointer", marginBottom: 8 }}>Já tenho conta — Entrar</button>
             <button onClick={() => setEtapa("contato")} style={{ width: "100%", background: "transparent", color: "#1E5C3A", border: "1px solid #C8E6D4", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>💬 Fale Conosco</button>
           </div>
