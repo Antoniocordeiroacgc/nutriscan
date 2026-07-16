@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "./lib/supabase";
 import Rodape from "./Rodape";
+import TelaPagamento from "./TelaPagamento";
 
 const OBJETIVOS = [
   { id: "emagrecimento", label: "⚖️ Emagrecimento", desc: "Perder gordura preservando músculo" },
@@ -70,6 +71,7 @@ export default function Cadastro({ onCadastrado }) {
   const [peso, setPeso] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [pacienteTemp, setPacienteTemp] = useState(null);
 
   // Fale conosco
   const [cNome, setCNome] = useState("");
@@ -105,8 +107,8 @@ export default function Cadastro({ onCadastrado }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setEtapa("sucesso");
-      setTimeout(() => onCadastrado(data), 2500);
+      setPacienteTemp(data);
+      setEtapa("pagamento");
     } catch (e) {
       setErro(e.message);
     }
@@ -295,6 +297,24 @@ export default function Cadastro({ onCadastrado }) {
         )}
 
         {/* SUCESSO */}
+        {etapa === "pagamento" && pacienteTemp && (
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a1a", marginBottom: 4 }}>Finalizar cadastro</div>
+            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 20 }}>Escolha a forma de pagamento</div>
+            <TelaPagamento
+              pacienteId={pacienteTemp.id}
+              nome={pacienteTemp.nome}
+              email={pacienteTemp.email}
+              onConcluido={() => {
+                setEtapa("sucesso");
+                setTimeout(() => onCadastrado(pacienteTemp), 2500);
+              }}
+              onVoltar={() => setEtapa("peso")}
+            />
+          </div>
+        )}
+
+
         {etapa === "sucesso" && (
           <div style={{ textAlign: "center", padding: "16px 0" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
