@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           items: [{
-            title: "NutriScan — Plano Anual",
+            title: "NutriScan — Plano Mensal",
             quantity: 1,
             unit_price: VALOR_PLANO,
             currency_id: "BRL",
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           items: [{
-            title: "NutriScan — Plano Anual",
+            title: "NutriScan — Plano Mensal",
             quantity: 1,
             unit_price: VALOR_PLANO,
             currency_id: "BRL",

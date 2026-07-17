@@ -153,7 +153,7 @@ export default function Cadastro({ onCadastrado }) {
         <div style={{ fontSize: 11, color: "#aaa", letterSpacing: 1.5, textTransform: "uppercase" }}>CRIAR.IA TECNOLOGIA</div>
       </div>
 
-            <div className="card" style={{ background: "white", borderRadius: 20, padding: 24, width: "100%", maxWidth: 400, border: "1px solid #F0EFE8" }}>
+      <div className="card" style={{ background: "white", borderRadius: 20, padding: 24, width: "100%", maxWidth: 400, border: "1px solid #F0EFE8" }}>
 
         {/* INÍCIO */}
         {etapa === "inicio" && (
@@ -291,22 +291,38 @@ export default function Cadastro({ onCadastrado }) {
 
         {/* SUCESSO */}
         {etapa === "pagamento" && pacienteTemp && (
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a1a", marginBottom: 4 }}>Finalizar cadastro</div>
-            <div style={{ fontSize: 12, color: "#aaa", marginBottom: 20 }}>Escolha a forma de pagamento</div>
-            <TelaPagamento
-              pacienteId={pacienteTemp.id}
-              nome={pacienteTemp.nome}
-              email={pacienteTemp.email}
-              onConcluido={() => {
-                setEtapa("sucesso");
-                setTimeout(() => onCadastrado(pacienteTemp), 2500);
-              }}
-              onVoltar={() => setEtapa("peso")}
-            />
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
+            <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>Quase lá!</div>
+            <div style={{ fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.6 }}>
+              Para acessar o NutriScan, finalize o pagamento do plano anual de <strong>R$ 34,90</strong>.
+            </div>
+            <button onClick={async () => {
+              setLoading(true);
+              try {
+                const response = await fetch("/api/criar-pagamento", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    nome: pacienteTemp.nome,
+                    email: pacienteTemp.email,
+                    forma: "pix",
+                    valor: 34.90,
+                    pacienteId: pacienteTemp.id,
+                  }),
+                });
+                const data = await response.json();
+                if (data.invoiceUrl) window.location.href = data.invoiceUrl;
+              } catch (e) {
+                setErro(e.message);
+              }
+              setLoading(false);
+            }} disabled={loading} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
+              {loading ? "Aguarde..." : "💳 Ir para pagamento →"}
+            </button>
+            <button onClick={() => setEtapa("peso")} style={{ width: "100%", background: "transparent", color: "#666", border: "none", fontSize: 13, cursor: "pointer", padding: 8 }}>← Voltar</button>
           </div>
         )}
-
 
         {etapa === "sucesso" && (
           <div style={{ textAlign: "center", padding: "16px 0" }}>
