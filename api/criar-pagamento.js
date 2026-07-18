@@ -44,9 +44,7 @@ export default async function handler(req, res) {
             pending: "https://nutriscan.ia.br?pagamento=pendente",
           },
           auto_return: "approved",
-          payment_methods: {
-            default_payment_method_id: "pix",
-          },
+
         }),
       });
 
