@@ -7,8 +7,8 @@ import Tutorial from "./Tutorial";
 import Rodape from "./Rodape";
 
 export default function App() {
-  const [tela, setTela]                       = useState("cadastro");
-  const [paciente, setPaciente]               = useState(null);
+  const [tela, setTela] = useState("cadastro");
+  const [paciente, setPaciente] = useState(null);
   const [mostrarTutorial, setMostrarTutorial] = useState(false);
 
   useEffect(() => {
@@ -21,19 +21,26 @@ export default function App() {
       const salvo = localStorage.getItem("nutriscan_paciente");
       if (salvo) {
         const p = JSON.parse(salvo);
-        if (p?.id) { setPaciente(p); setTela("paciente"); }
+        if (p?.id) {
+          setPaciente(p);
+          if (!p.pago) {
+            setTela("aguardando_pagamento");
+          } else {
+            setTela("paciente");
+          }
+        }
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const onCadastrado = (p) => {
-  localStorage.setItem("nutriscan_paciente", JSON.stringify(p));
-  setPaciente(p);
-  if (!p.pago) {
-    setTela("cadastro");
-    return;
-  }
-  setTela("paciente");
+    localStorage.setItem("nutriscan_paciente", JSON.stringify(p));
+    setPaciente(p);
+    if (!p.pago) {
+      setTela("cadastro");
+      return;
+    }
+    setTela("paciente");
     const jaViu = localStorage.getItem(`tutorial_${p.id}`);
     if (!jaViu) setMostrarTutorial(true);
   };
@@ -51,9 +58,35 @@ export default function App() {
     localStorage.removeItem("nutriscan_paciente");
     setPaciente(null); setTela("cadastro");
   };
-
+  if (tela === "aguardando_pagamento" && paciente) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#F7F5F0", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "system-ui, sans-serif" }}>
+        <div style={{ background: "white", borderRadius: 20, padding: 32, width: "100%", maxWidth: 400, textAlign: "center", border: "1px solid #F0EFE8" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>⏳</div>
+          <div style={{ fontWeight: 800, fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>Pagamento pendente</div>
+          <div style={{ fontSize: 13, color: "#888", lineHeight: 1.6, marginBottom: 20 }}>
+            Olá {paciente.nome?.split(" ")[0]}! Para acessar o NutriScan finalize o pagamento do plano mensal de <strong>R$ 34,90</strong>.
+          </div>
+          <button onClick={async () => {
+            const response = await fetch("/api/criar-pagamento", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nome: paciente.nome, email: paciente.email, forma: "cartao", valor: 34.90, pacienteId: paciente.id }),
+            });
+            const data = await response.json();
+            if (data.invoiceUrl) window.location.href = data.invoiceUrl;
+          }} style={{ width: "100%", background: "#1E5C3A", color: "white", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
+            💳 Finalizar pagamento →
+          </button>
+          <button onClick={sair} style={{ width: "100%", background: "transparent", color: "#666", border: "none", fontSize: 13, cursor: "pointer", padding: 8 }}>
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (tela === "cadastro") return <Cadastro onCadastrado={onCadastrado} />;
-  if (tela === "admin")    return <AdminPanel onSair={() => setTela("cadastro")} />;
+  if (tela === "admin") return <AdminPanel onSair={() => setTela("cadastro")} />;
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh", background: "#F7F5F0", display: "flex", flexDirection: "column" }}>
@@ -78,7 +111,7 @@ export default function App() {
 
         {/* Toggle */}
         <div style={{ display: "flex", background: "rgba(0,0,0,0.25)", borderRadius: 99, padding: 3, gap: 2 }}>
-          {[["paciente","📱"],["nutricionista","👩‍⚕️"]].map(([key, icon]) => (
+          {[["paciente", "📱"], ["nutricionista", "👩‍⚕️"]].map(([key, icon]) => (
             <button key={key} onClick={() => setTela(key)} style={{ background: tela === key ? "white" : "transparent", color: tela === key ? "#1E5C3A" : "rgba(255,255,255,0.7)", border: "none", borderRadius: 99, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
               {icon}
             </button>
