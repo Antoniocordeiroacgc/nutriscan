@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           },
           auto_return: "approved",
           payment_methods: {
-            excluded_payment_types: forma === "cartao" ? [{ id: "ticket" }] : [],
+            default_payment_method_id: "pix",
           },
         }),
       });
