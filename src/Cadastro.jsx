@@ -295,7 +295,7 @@ export default function Cadastro({ onCadastrado }) {
             <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
             <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a1a", marginBottom: 8 }}>Quase lá!</div>
             <div style={{ fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.6 }}>
-              Para acessar o NutriScan, finalize o pagamento do plano anual de <strong>R$ 34,90</strong>.
+              Para acessar o NutriScan, finalize o pagamento do plano mensal de <strong>R$ 34,90</strong>.
             </div>
             <button onClick={async () => {
               setLoading(true);
