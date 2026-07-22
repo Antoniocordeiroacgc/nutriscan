@@ -76,7 +76,7 @@ export default async function handler(req, res) {
           }],
           payer: { email, name: nome },
           external_reference: pacienteId,
-          notification_url: "https://nutriscan-rho.vercel.app/api/webhook-mercadopago",
+          //notification_url: "https://nutriscan-rho.vercel.app/api/webhook-mercadopago",
           back_urls: {
             success: "https://nutriscan-rho.vercel.app?pagamento=sucesso",
             failure: "https://nutriscan-rho.vercel.app?pagamento=erro",
