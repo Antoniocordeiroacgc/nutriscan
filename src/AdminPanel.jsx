@@ -7,17 +7,17 @@ const VALOR_PLANO = 34.90;
 
 export default function AdminPanel({ onSair }) {
   const [autenticado, setAutenticado] = useState(false);
-  const [senha, setSenha]             = useState("");
-  const [erro, setErro]               = useState("");
-  const [aba, setAba]                 = useState("pacientes");
-  const [pacientes, setPacientes]     = useState([]);
-  const [contatos, setContatos]       = useState([]);
-  const [refeicoes, setRefeicoes]     = useState({});
-  const [carregando, setCarregando]   = useState(false);
-  const [busca, setBusca]             = useState("");
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [aba, setAba] = useState("pacientes");
+  const [pacientes, setPacientes] = useState([]);
+  const [contatos, setContatos] = useState([]);
+  const [refeicoes, setRefeicoes] = useState({});
+  const [carregando, setCarregando] = useState(false);
+  const [busca, setBusca] = useState("");
   const [editandoPgto, setEditandoPgto] = useState(null);
-  const [formaSel, setFormaSel]       = useState("pix");
-  const [valorSel, setValorSel]       = useState(VALOR_PLANO);
+  const [formaSel, setFormaSel] = useState("pix");
+  const [valorSel, setValorSel] = useState(VALOR_PLANO);
 
   const entrar = () => {
     if (senha === ADMIN_SENHA) { setAutenticado(true); carregar(); }
@@ -111,13 +111,13 @@ export default function AdminPanel({ onSair }) {
     c.email?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  const totalRefeicoes  = Object.values(refeicoes).reduce((s, v) => s + v, 0);
-  const ativos          = pacientes.filter(p => diasRestantes(p.trial_fim) > 0).length;
-  const naoRespondidos  = contatos.filter(c => !c.respondido).length;
-  const inadimplentes   = pacientes.filter(p => !p.pago && diasRestantes(p.trial_fim) === 0).length;
-  const totalRecebido   = pacientes.reduce((s, p) => s + (p.pago ? Number(p.valor_pago || 0) : 0), 0);
-  const totalPendente   = inadimplentes * VALOR_PLANO;
-  const pagantes        = pacientes.filter(p => p.pago).length;
+  const totalRefeicoes = Object.values(refeicoes).reduce((s, v) => s + v, 0);
+  const ativos = pacientes.filter(p => diasRestantes(p.trial_fim) > 0).length;
+  const naoRespondidos = contatos.filter(c => !c.respondido).length;
+  const inadimplentes = pacientes.filter(p => !p.pago && diasRestantes(p.trial_fim) === 0).length;
+  const totalRecebido = pacientes.reduce((s, p) => s + (p.pago ? Number(p.valor_pago || 0) : 0), 0);
+  const totalPendente = inadimplentes * VALOR_PLANO;
+  const pagantes = pacientes.filter(p => p.pago).length;
 
   if (!autenticado) {
     return (
@@ -179,10 +179,10 @@ export default function AdminPanel({ onSair }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10, marginBottom: 16 }}>
           {[
             { label: "Total cadastrados", val: pacientes.length, icon: "👥", color: "#1E5C3A" },
-            { label: "Em teste grátis",   val: ativos - pagantes < 0 ? 0 : ativos - pagantes, icon: "🎁", color: "#378ADD" },
-            { label: "Refeições",         val: totalRefeicoes,   icon: "🍽️", color: "#EF9F27" },
-            { label: "Inadimplentes",     val: inadimplentes,    icon: "💰", color: inadimplentes > 0 ? "#E24B4A" : "#888" },
-            { label: "Contatos novos",    val: naoRespondidos,   icon: "💬", color: naoRespondidos > 0 ? "#E24B4A" : "#888" },
+            { label: "Em teste grátis", val: ativos - pagantes < 0 ? 0 : ativos - pagantes, icon: "🎁", color: "#378ADD" },
+            { label: "Refeições", val: totalRefeicoes, icon: "🍽️", color: "#EF9F27" },
+            { label: "Inadimplentes", val: inadimplentes, icon: "💰", color: inadimplentes > 0 ? "#E24B4A" : "#888" },
+            { label: "Contatos novos", val: naoRespondidos, icon: "💬", color: naoRespondidos > 0 ? "#E24B4A" : "#888" },
           ].map((m, i) => (
             <div key={i} style={{ background: "white", borderRadius: 14, padding: "12px 14px", border: "1px solid #F0EFE8" }}>
               <div style={{ fontSize: 20, marginBottom: 4 }}>{m.icon}</div>
@@ -266,7 +266,10 @@ export default function AdminPanel({ onSair }) {
                             <button onClick={() => setEditandoPgto(null)} style={{ background: "#F0EFE8", color: "#888", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}>✕</button>
                           </div>
                         ) : pago ? (
-                          <button onClick={() => marcarNaoPago(p.id)} style={{ background: "#EEF7F2", color: "#0F6E56", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Pago</button>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <span style={{ background: "#EEF7F2", color: "#0F6E56", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>✓ Pago</span>
+                            <button onClick={() => marcarNaoPago(p.id)} style={{ background: "#FCEBEB", color: "#E24B4A", border: "none", borderRadius: 8, padding: "4px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>🔒 Bloquear</button>
+                          </div>
                         ) : (
                           <button onClick={() => abrirEdicaoPagamento(p)} style={{ background: "#FCEBEB", color: "#E24B4A", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>+ Registrar</button>
                         )}
@@ -305,7 +308,7 @@ export default function AdminPanel({ onSair }) {
                   <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
                     <a href={`https://mail.google.com/mail/?view=cm&to=${c.email}&su=NutriScan — Retorno ao seu contato`} target="_blank" rel="noopener noreferrer" style={{ background: "#1E5C3A", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>✉️ Responder</a>
                     {c.celular && (
-                      <a href={`https://wa.me/55${c.celular.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>💬 WhatsApp</a>
+                      <a href={`https://wa.me/55${c.celular.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ background: "#25D366", color: "white", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, textDecoration: "none" }}>💬 WhatsApp</a>
                     )}
                     {!c.respondido ? (
                       <button onClick={() => marcarRespondido(c.id)} style={{ background: "#EEF7F2", color: "#0F6E56", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>✓ Respondido</button>
